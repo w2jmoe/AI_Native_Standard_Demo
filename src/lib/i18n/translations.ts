@@ -205,7 +205,7 @@ export const translations = {
     },
     submit: "提交评估",
     submitting: "正在生成画像…",
-    displayNameLabel: "显示名称",
+    displayNameLabel: "您的名称",
     displayNamePlaceholder: "可以用昵称",
     displayNameHint: "选填。会显示在结果页和分享卡片上。",
     anonymousName: "Anonymous",
