@@ -14,6 +14,7 @@ import { trackEvent } from "@/lib/analytics";
 import {
   ASSESSMENT_STORAGE_KEY,
   EVALUATION_STORAGE_KEY,
+  resolveDisplayName,
   type AssessmentAnswers,
   type EvaluationResult,
 } from "@/types/assessment";
@@ -30,6 +31,7 @@ export function AssessmentForm() {
   const { t, locale } = useLanguage();
   const router = useRouter();
   const [answers, setAnswers] = useState<AssessmentAnswers>(emptyAnswers);
+  const [displayName, setDisplayName] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [restored, setRestored] = useState(false);
@@ -39,6 +41,7 @@ export function AssessmentForm() {
     const draft = loadAssessmentDraft();
     if (draft) {
       setAnswers(draftToAnswers(draft));
+      setDisplayName(draft.displayName ?? "");
       setRestored(true);
     }
     setHydrated(true);
@@ -46,8 +49,8 @@ export function AssessmentForm() {
 
   useEffect(() => {
     if (!hydrated) return;
-    saveAssessmentDraft(answers);
-  }, [answers, hydrated]);
+    saveAssessmentDraft(answers, displayName);
+  }, [answers, displayName, hydrated]);
 
   const fields: {
     key: keyof AssessmentAnswers;
@@ -108,6 +111,8 @@ export function AssessmentForm() {
     setError(null);
     trackEvent("submit_assessment", { locale });
 
+    const resolvedName = resolveDisplayName(displayName);
+
     window.sessionStorage.setItem(
       ASSESSMENT_STORAGE_KEY,
       JSON.stringify(answers),
@@ -134,7 +139,7 @@ export function AssessmentForm() {
       });
 
       clearAssessmentDraft();
-      saveResultCache(answers, data, locale);
+      saveResultCache(answers, data, locale, resolvedName);
       window.sessionStorage.setItem(
         EVALUATION_STORAGE_KEY,
         JSON.stringify(data),
@@ -221,6 +226,30 @@ export function AssessmentForm() {
             />
           </div>
         ))}
+
+        <div className="space-y-3 border-t border-black/[0.06] pt-8">
+          <label
+            htmlFor="displayName"
+            className="text-[15px] font-medium text-black"
+          >
+            {t.displayNameLabel}
+          </label>
+          <p className="text-[13px] leading-relaxed text-black/35">
+            {t.displayNameHint}
+          </p>
+          <input
+            id="displayName"
+            type="text"
+            value={displayName}
+            onChange={(e) => {
+              setDisplayName(e.target.value);
+              if (restored) setRestored(false);
+            }}
+            placeholder={t.displayNamePlaceholder}
+            maxLength={40}
+            className="w-full rounded-2xl border border-black/[0.08] bg-white px-4 py-3.5 text-[15px] leading-relaxed text-black outline-none transition-shadow placeholder:text-black/30 focus:border-[color:var(--brand)]/35 focus:shadow-[0_0_0_3px_var(--brand-glow)]"
+          />
+        </div>
 
         {error && (
           <div

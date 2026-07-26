@@ -40,6 +40,14 @@ export type EvaluationResult = {
 
 export const ASSESSMENT_STORAGE_KEY = "ans-assessment-answers";
 export const EVALUATION_STORAGE_KEY = "ans-evaluation-result";
+export const DISPLAY_NAME_STORAGE_KEY = "ans-display-name";
+
+export const ANONYMOUS_DISPLAY_NAME = "Anonymous";
+
+export function resolveDisplayName(name?: string | null): string {
+  const trimmed = (name ?? "").trim();
+  return trimmed || ANONYMOUS_DISPLAY_NAME;
+}
 
 export const dimensionMeta: Record<
   DimensionKey,

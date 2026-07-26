@@ -6,6 +6,7 @@ import { trackEvent } from "@/lib/analytics";
 import { getProfileSymbol } from "./ProfileBadge";
 
 type ShareCardProps = {
+  displayName: string;
   profile: string;
   profileId: string;
   score: number;
@@ -14,6 +15,7 @@ type ShareCardProps = {
 
 function buildShareText(options: {
   locale: "en" | "zh";
+  displayName: string;
   profile: string;
   score: number;
   url: string;
@@ -22,29 +24,22 @@ function buildShareText(options: {
   scoreLabel: string;
   cta: string;
 }) {
-  const { locale, profile, score, url, intro, profileLabel, scoreLabel, cta } =
-    options;
-
-  if (locale === "zh") {
-    return [
-      intro,
-      "",
-      profileLabel,
-      profile,
-      "",
-      scoreLabel,
-      `${score}/100`,
-      "",
-      cta,
-      url,
-    ].join("\n");
-  }
+  const {
+    displayName,
+    profile,
+    score,
+    url,
+    intro,
+    profileLabel,
+    scoreLabel,
+    cta,
+  } = options;
 
   return [
     intro,
     "",
     profileLabel,
-    profile,
+    `${profile} | ${displayName}`,
     "",
     scoreLabel,
     `${score}/100`,
@@ -55,6 +50,7 @@ function buildShareText(options: {
 }
 
 export function ShareCard({
+  displayName,
   profile,
   profileId,
   score,
@@ -75,6 +71,7 @@ export function ShareCard({
 
     const text = buildShareText({
       locale,
+      displayName,
       profile,
       score,
       url,
@@ -111,9 +108,16 @@ export function ShareCard({
           </div>
 
           <div className="space-y-2">
-            <p className="text-[13px] text-white/65">{t.shareCardLine}</p>
-            <p className="text-[28px] font-semibold tracking-tight sm:text-[32px]">
-              {profile}
+            <p className="text-[13px] text-white/55">{t.shareCardLine}</p>
+            <p className="flex flex-wrap items-center gap-x-3.5 text-[28px] font-semibold tracking-tight sm:gap-x-4 sm:text-[32px]">
+              <span>{profile}</span>
+              <span
+                className="inline-block h-[0.9em] w-px shrink-0 bg-white/35"
+                aria-hidden
+              />
+              <span className="font-medium tracking-normal text-white">
+                {displayName}
+              </span>
             </p>
           </div>
 

@@ -19,6 +19,7 @@ import { ShareCard } from "./ShareCard";
 export function ResultPage() {
   const { t, locale } = useLanguage();
   const [result, setResult] = useState<EvaluationResult | null>(null);
+  const [displayName, setDisplayName] = useState("Anonymous");
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -26,6 +27,7 @@ export function ResultPage() {
       const cache = loadResultCache();
       if (cache?.result) {
         setResult(cache.result);
+        setDisplayName(cache.displayName);
         setReady(true);
         return;
       }
@@ -96,10 +98,15 @@ export function ResultPage() {
         </h1>
 
         <div className="surface-card mx-auto max-w-xl rounded-[24px] px-6 py-9 sm:px-10">
-          <div className="flex items-center justify-center gap-3">
+          <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-2">
             <ProfileBadge profileId={result.profileId} size="md" />
-            <p className="text-[26px] font-semibold tracking-tight text-black sm:text-[32px]">
-              {profileName}
+            <p className="flex flex-wrap items-center justify-center gap-x-3.5 text-[26px] font-semibold tracking-tight text-black sm:gap-x-4 sm:text-[32px]">
+              <span>{profileName}</span>
+              <span
+                className="inline-block h-[0.9em] w-px shrink-0 bg-black/20"
+                aria-hidden
+              />
+              <span className="font-medium tracking-normal">{displayName}</span>
             </p>
           </div>
         </div>
@@ -126,7 +133,7 @@ export function ResultPage() {
             <p className="text-[13px] text-black/40">
               {t.topStrengthLabel}
               <span className="ml-2 font-medium text-[color:var(--brand)]">
-                {top.label} · {top.score}
+                {top.label} 　|　 {top.score}
               </span>
             </p>
           )}
@@ -166,6 +173,7 @@ export function ResultPage() {
 
       <div className="mt-14">
         <ShareCard
+          displayName={displayName}
           profile={profileName}
           profileId={result.profileId}
           score={result.score}

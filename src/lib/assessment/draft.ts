@@ -3,6 +3,7 @@ import type { AssessmentAnswers } from "@/types/assessment";
 /** localStorage draft for in-progress assessment */
 export type AssessmentDraft = {
   status: "in_progress";
+  displayName: string;
   problemFraming: string;
   aiCollaboration: string;
   solution: string;
@@ -15,9 +16,11 @@ export const ASSESSMENT_DRAFT_KEY = "ans-assessment-draft";
 
 export function answersToDraft(
   answers: AssessmentAnswers,
+  displayName = "",
 ): AssessmentDraft {
   return {
     status: "in_progress",
+    displayName,
     problemFraming: answers.problem,
     aiCollaboration: answers.collaboration,
     solution: answers.solution,
@@ -39,7 +42,8 @@ export function draftToAnswers(draft: AssessmentDraft): AssessmentAnswers {
 
 function hasContent(draft: AssessmentDraft): boolean {
   return Boolean(
-    draft.problemFraming.trim() ||
+    draft.displayName?.trim() ||
+      draft.problemFraming.trim() ||
       draft.aiCollaboration.trim() ||
       draft.solution.trim() ||
       draft.judgment.trim() ||
@@ -55,16 +59,22 @@ export function loadAssessmentDraft(): AssessmentDraft | null {
     const parsed = JSON.parse(raw) as AssessmentDraft;
     if (parsed.status !== "in_progress") return null;
     if (!hasContent(parsed)) return null;
-    return parsed;
+    return {
+      ...parsed,
+      displayName: parsed.displayName ?? "",
+    };
   } catch {
     return null;
   }
 }
 
-export function saveAssessmentDraft(answers: AssessmentAnswers): void {
+export function saveAssessmentDraft(
+  answers: AssessmentAnswers,
+  displayName = "",
+): void {
   if (typeof window === "undefined") return;
   try {
-    const draft = answersToDraft(answers);
+    const draft = answersToDraft(answers, displayName);
     if (!hasContent(draft)) {
       window.localStorage.removeItem(ASSESSMENT_DRAFT_KEY);
       return;

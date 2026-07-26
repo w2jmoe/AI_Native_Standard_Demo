@@ -1,5 +1,9 @@
 import { normalizeCachedResult } from "@/lib/evaluation/parse";
-import type { AssessmentAnswers, EvaluationResult } from "@/types/assessment";
+import {
+  resolveDisplayName,
+  type AssessmentAnswers,
+  type EvaluationResult,
+} from "@/types/assessment";
 import type { Locale } from "@/lib/i18n/translations";
 
 export const RESULT_CACHE_KEY = "ans-result-cache";
@@ -7,6 +11,7 @@ export const RESULT_CACHE_KEY = "ans-result-cache";
 export type ResultCache = {
   answers: AssessmentAnswers;
   result: EvaluationResult;
+  displayName: string;
   locale: Locale;
   savedAt: string;
 };
@@ -15,12 +20,14 @@ export function saveResultCache(
   answers: AssessmentAnswers,
   result: EvaluationResult,
   locale: Locale,
+  displayName = "",
 ): void {
   if (typeof window === "undefined") return;
   try {
     const payload: ResultCache = {
       answers,
       result,
+      displayName: resolveDisplayName(displayName),
       locale,
       savedAt: new Date().toISOString(),
     };
@@ -38,6 +45,7 @@ export function loadResultCache(): ResultCache | null {
     const parsed = JSON.parse(raw) as {
       answers?: AssessmentAnswers;
       result?: unknown;
+      displayName?: string;
       locale?: Locale;
       savedAt?: string;
     };
@@ -46,6 +54,7 @@ export function loadResultCache(): ResultCache | null {
     return {
       answers: parsed.answers,
       result,
+      displayName: resolveDisplayName(parsed.displayName),
       locale: parsed.locale === "zh" ? "zh" : "en",
       savedAt: parsed.savedAt || new Date().toISOString(),
     };
