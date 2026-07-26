@@ -220,7 +220,7 @@ export const translations = {
     shareTextCta: "发现你与 AI 协作创造价值的方式：",
     continueHint: "这是一份能力发现画像——不是通过或失败。",
     footerNote: "AI 工作模拟 · 能力发现",
-    footerBrand: "AI Native Standard",
+    footerBrand: "AI 工作能力验证",
     footerTagline: "探索 AI 时代工作能力验证方式。",
     footerContactLabel: "研究交流与合作：",
     evaluateErrorTitle: "出了点问题",
