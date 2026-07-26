@@ -37,18 +37,18 @@ function isDev() {
  */
 function normalizeBaseUrl(raw: string): string {
   if (/^sk-/i.test(raw) || !/^https?:\/\//i.test(raw)) {
-    throw new Error("Invalid 302 API base URL");
+    throw new Error("Invalid API base URL");
   }
 
   let parsed: URL;
   try {
     parsed = new URL(raw.trim());
   } catch {
-    throw new Error("Invalid 302 API base URL");
+    throw new Error("Invalid API base URL");
   }
 
   if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
-    throw new Error("Invalid 302 API base URL");
+    throw new Error("Invalid API base URL");
   }
 
   let path = parsed.pathname.replace(/\/+$/, "");
@@ -68,32 +68,32 @@ function normalizeBaseUrl(raw: string): string {
 }
 
 /**
- * Resolve 302.AI config without swapping key and base URL.
- * 302_API_KEY  → Bearer token (sk-...)
- * 302_BASE_URL → API base (https://api.302ai.cn/v1)
+ * Resolve AI provider config without swapping key and base URL.
+ * API_KEY  → Bearer token (sk-...)
+ * BASE_URL → API base (https://api.302ai.cn/v1)
+ * MODEL    → model name (gpt-5-mini)
  */
 function get302Config() {
-  const apiKey = readEnv("302_API_KEY", "ANS_302_API_KEY");
-  const baseUrlRaw =
-    readEnv("302_BASE_URL", "ANS_302_BASE_URL") || DEFAULT_BASE_URL;
-  const model = readEnv("302_MODEL", "ANS_302_MODEL") || "gpt-5-mini";
+  const apiKey = readEnv("API_KEY");
+  const baseUrlRaw = readEnv("BASE_URL") || DEFAULT_BASE_URL;
+  const model = readEnv("MODEL") || "gpt-5-mini";
 
   if (!apiKey) {
-    throw new Error("Missing 302 API key");
+    throw new Error("Missing API key");
   }
 
   if (/^https?:\/\//i.test(apiKey)) {
-    throw new Error("Invalid 302 API base URL");
+    throw new Error("Invalid API base URL");
   }
 
   const baseUrl = normalizeBaseUrl(baseUrlRaw);
 
   if (isDev()) {
-    console.log("[302 config] BASE_URL loaded:", Boolean(baseUrlRaw));
-    console.log("[302 config] BASE_URL value:", baseUrl);
-    console.log("[302 config] MODEL loaded:", Boolean(model));
-    console.log("[302 config] MODEL value:", model);
-    console.log("[302 config] API_KEY loaded:", Boolean(apiKey));
+    console.log("[ai config] BASE_URL loaded:", Boolean(baseUrlRaw));
+    console.log("[ai config] BASE_URL value:", baseUrl);
+    console.log("[ai config] MODEL loaded:", Boolean(model));
+    console.log("[ai config] MODEL value:", model);
+    console.log("[ai config] API_KEY loaded:", Boolean(apiKey));
   }
 
   return { apiKey, baseUrl, model };
