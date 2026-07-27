@@ -11,10 +11,11 @@ type ShareCardProps = {
   profileId: string;
   score: number;
   capability: string;
+  /** "card" = poster preview; "cta" = share action only (no duplicated content). */
+  variant?: "card" | "cta";
 };
 
 function buildShareText(options: {
-  locale: "en" | "zh";
   displayName: string;
   profile: string;
   score: number;
@@ -55,6 +56,7 @@ export function ShareCard({
   profileId,
   score,
   capability,
+  variant = "card",
 }: ShareCardProps) {
   const { t, locale } = useLanguage();
   const [toast, setToast] = useState<string | null>(null);
@@ -70,7 +72,6 @@ export function ShareCard({
       typeof window !== "undefined" ? window.location.origin : "https://";
 
     const text = buildShareText({
-      locale,
       displayName,
       profile,
       score,
@@ -90,8 +91,31 @@ export function ShareCard({
     }
   }
 
+  if (variant === "cta") {
+    return (
+      <div className="relative flex flex-wrap items-center justify-between gap-3">
+        <p className="text-[13px] text-black/40">{t.shareTitle}</p>
+        <button
+          type="button"
+          onClick={handleCopy}
+          className="brand-button inline-flex h-11 items-center justify-center rounded-full px-7 text-[14px] font-medium"
+        >
+          {t.copyShareText}
+        </button>
+        {toast && (
+          <div
+            role="status"
+            className="pointer-events-none absolute left-1/2 top-full z-20 mt-3 w-max -translate-x-1/2 rounded-full bg-[#142033] px-4 py-2 text-[13px] text-white shadow-lg"
+          >
+            {toast}
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
-    <div className="relative mx-auto w-full max-w-md px-1">
+    <div className="relative w-full">
       <p className="mb-4 text-center text-[13px] text-black/40">{t.shareTitle}</p>
       <div
         className="share-card rounded-[24px] bg-[color:var(--brand)] px-7 py-9 text-white sm:px-8 sm:py-10"

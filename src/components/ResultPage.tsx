@@ -5,7 +5,11 @@ import { useEffect, useState } from "react";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { loadResultCache } from "@/lib/assessment/resultCache";
 import { normalizeCachedResult } from "@/lib/evaluation/parse";
-import { buildCompanyHiringProfile } from "@/lib/evaluation/hiringProfile";
+import {
+  buildAiWorkFitSignal,
+  buildStrongAreas,
+  buildValidationAreas,
+} from "@/lib/evaluation/hiringProfile";
 import {
   EVALUATION_STORAGE_KEY,
   dimensionMeta,
@@ -26,35 +30,6 @@ const DIMENSION_ORDER: DimensionKey[] = [
   "execution",
   "iteration",
 ];
-
-const SUITABLE_ROLES: Record<string, { en: string[]; zh: string[] }> = {
-  "AI Strategist": {
-    en: ["AI Native PM", "Product Strategy"],
-    zh: ["AI Native 产品经理", "产品策略"],
-  },
-  "AI Explorer": {
-    en: ["Associate AI PM", "Growth Associate"],
-    zh: ["AI 产品助理", "增长助理"],
-  },
-  "AI Operator": {
-    en: ["AI Product Ops", "Execution-focused PM"],
-    zh: ["AI 产品运营", "执行型产品经理"],
-  },
-  "AI Architect": {
-    en: ["AI Systems PM", "Platform PM"],
-    zh: ["AI 系统产品经理", "平台产品经理"],
-  },
-  "Balanced AI Native": {
-    en: ["AI Native PM", "Cross-functional PM"],
-    zh: ["AI Native 产品经理", "跨职能产品经理"],
-  },
-};
-
-function resolveRoles(profileId: string, locale: "en" | "zh"): string[] {
-  const roles =
-    SUITABLE_ROLES[profileId] ?? SUITABLE_ROLES["Balanced AI Native"];
-  return locale === "zh" ? roles.zh : roles.en;
-}
 
 export function ResultPage() {
   const { t, locale } = useLanguage();
@@ -117,22 +92,9 @@ export function ResultPage() {
   const evidenceSummary =
     pickLocalized(result.evidenceSummary, locale) ||
     t.evidenceSummaryFallback;
-  const hiringProfile = buildCompanyHiringProfile(result, locale);
-  const recommendation =
-    locale === "zh"
-      ? hiringProfile.recommendationZh
-      : hiringProfile.recommendationEn;
-  const hiringReason =
-    locale === "zh" ? hiringProfile.reasonZh : hiringProfile.reasonEn;
-
-  const confidenceLabel =
-    hiringProfile.signalStrength === "strong"
-      ? t.confidenceHigh
-      : hiringProfile.signalStrength === "moderate"
-        ? t.confidenceMedium
-        : t.confidenceLow;
-
-  const suitableRoles = resolveRoles(result.profileId, locale);
+  const workFit = buildAiWorkFitSignal(result, locale);
+  const strongAreaItems = buildStrongAreas(result, locale);
+  const validationAreas = buildValidationAreas(result, locale);
 
   const rankedDimensions = [...result.dimensions]
     .map((d) => ({
@@ -143,18 +105,6 @@ export function ResultPage() {
     }))
     .sort((a, b) => b.score - a.score);
 
-  const strongAreas = rankedDimensions.slice(0, 2);
-  const developmentAreas = [...rankedDimensions].reverse().slice(0, 2);
-
-  const keyReasons = [
-    ...strongAreas.map((d) =>
-      locale === "zh"
-        ? `${d.label}表现突出，工作证据相对清晰`
-        : `Stronger signal in ${d.label} with clearer work evidence`,
-    ),
-    strength,
-  ].filter(Boolean);
-
   const orderedDimensions = DIMENSION_ORDER.map((key) => {
     const found = result.dimensions.find((d) => d.name === key);
     return {
@@ -164,7 +114,6 @@ export function ResultPage() {
     };
   });
 
-  const capabilityLine = strength;
   const isPersonal = view === "personal";
 
   return (
@@ -210,23 +159,34 @@ export function ResultPage() {
 
       {isPersonal ? (
         <>
-          {/* Layer 1 — AI work capability profile */}
-          <div className="surface-card mx-auto mt-8 max-w-xl rounded-[24px] px-6 py-9 text-center sm:px-10">
-            <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-2">
-              <ProfileBadge profileId={result.profileId} size="md" />
-              <p className="text-[26px] font-semibold tracking-tight text-black sm:text-[32px]">
-                {profileName}
-              </p>
-            </div>
-            <p className="mt-2 text-[14px] text-black/45">{displayName}</p>
-            <p className="mt-1 text-[12px] tabular-nums text-black/30">
-              {t.ansScoreSubtle} {result.score}
-            </p>
+          {/* One portrait zone: identity + share action (no duplicated poster) */}
+          <div className="surface-card mx-auto mt-8 max-w-2xl rounded-[24px] px-6 py-8 sm:px-9 sm:py-10">
+            <div className="text-center">
+              <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-2">
+                <ProfileBadge profileId={result.profileId} size="md" />
+                <p className="text-[26px] font-semibold tracking-tight text-black sm:text-[30px]">
+                  {profileName}
+                </p>
+              </div>
+              <p className="mt-2 text-[14px] text-black/45">{displayName}</p>
 
-            <div className="mt-8 grid gap-6 text-left sm:grid-cols-2">
+              <div className="mt-6">
+                <p className="text-[13px] font-medium text-black/40">
+                  {t.ansScore}
+                </p>
+                <p className="mt-1 tabular-nums text-[44px] font-semibold tracking-tight text-[color:var(--brand)]">
+                  {result.score}
+                  <span className="ml-1 text-[14px] font-normal text-black/35">
+                    /100
+                  </span>
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-8 grid gap-6 border-t border-black/[0.06] pt-7 text-left sm:grid-cols-2">
               <div className="space-y-2">
                 <p className="text-[13px] font-medium text-black/40">
-                  {t.coreStrengthLabel}
+                  {t.strengthLabel}
                 </p>
                 <p className="text-[15px] leading-relaxed text-black/75">
                   {strength}
@@ -234,17 +194,27 @@ export function ResultPage() {
               </div>
               <div className="space-y-2">
                 <p className="text-[13px] font-medium text-black/40">
-                  {t.nextGrowthLabel}
+                  {t.growthLabel}
                 </p>
                 <p className="text-[15px] leading-relaxed text-black/75">
                   {growth}
                 </p>
               </div>
             </div>
+
+            <div className="mt-8 border-t border-black/[0.06] pt-6">
+              <ShareCard
+                variant="cta"
+                displayName={displayName}
+                profile={profileName}
+                profileId={result.profileId}
+                score={result.score}
+                capability={strength}
+              />
+            </div>
           </div>
 
-          {/* Layer 2 — Capability dimensions */}
-          <div className="surface-card mt-6 overflow-hidden rounded-[24px]">
+          <div className="surface-card mx-auto mt-8 max-w-2xl overflow-hidden rounded-[24px]">
             <div className="space-y-7 px-6 py-8 sm:px-10 sm:py-10">
               <p className="text-[13px] font-medium text-black/40">
                 {t.capabilityOverviewLabel}
@@ -263,159 +233,164 @@ export function ResultPage() {
               </Link>
             </div>
           </div>
-
-          {/* Layer 3 — Share */}
-          <div className="mt-14">
-            <ShareCard
-              displayName={displayName}
-              profile={profileName}
-              profileId={result.profileId}
-              score={result.score}
-              capability={capabilityLine}
-            />
-          </div>
         </>
       ) : (
         <div className="mt-8 space-y-6">
-          {/* Layer 1 — Hiring Decision Summary */}
-          <div className="surface-card rounded-[24px] px-6 py-8 sm:px-10">
-            <p className="text-[12px] font-medium uppercase tracking-[0.12em] text-black/35">
-              {t.hiringDecisionSummaryLabel}
-            </p>
-            <p className="mt-2 text-[13px] leading-relaxed text-black/40">
-              {t.hiringDemoNote}
-            </p>
+          {/* Layer 1 — AI Work Fit Signal */}
+          <section className="surface-card rounded-[24px] px-6 py-7 sm:px-8 sm:py-8">
+            <div className="space-y-5">
+              <div className="space-y-1.5">
+                <p className="text-[12px] font-medium uppercase tracking-[0.12em] text-black/35">
+                  {t.workFitSignalLabel}
+                </p>
+                <p className="text-[13px] text-black/40">
+                  {workFit.strengthLabel}
+                </p>
+              </div>
 
-            <div className="mt-6 space-y-6">
               <div className="space-y-2">
                 <p className="text-[13px] font-medium text-black/40">
-                  {t.hiringRecommendationLabel}
+                  {t.coreJudgmentLabel}
                 </p>
-                <p className="text-[22px] font-semibold tracking-tight text-black sm:text-[24px]">
-                  {recommendation}
+                <p className="text-[20px] font-semibold leading-snug tracking-tight text-black sm:text-[24px]">
+                  {workFit.coreJudgment}
                 </p>
               </div>
 
-              <div className="grid gap-6 sm:grid-cols-2">
+              <div className="grid gap-5 border-t border-black/[0.06] pt-5 sm:grid-cols-2">
                 <div className="space-y-2">
                   <p className="text-[13px] font-medium text-black/40">
-                    {t.confidenceLabel}
+                    {t.workValueLabel}
                   </p>
-                  <p className="text-[16px] font-medium text-black/80">
-                    {confidenceLabel}
+                  <p className="text-[14px] leading-relaxed text-black/65">
+                    {workFit.workValue}
                   </p>
                 </div>
                 <div className="space-y-2">
                   <p className="text-[13px] font-medium text-black/40">
-                    {t.suitableRolesLabel}
+                    {t.nextValidationLabel}
                   </p>
-                  <p className="text-[16px] leading-relaxed text-black/80">
-                    {suitableRoles.join(locale === "zh" ? " · " : " · ")}
+                  <p className="text-[14px] leading-relaxed text-black/65">
+                    {workFit.nextValidation}
                   </p>
                 </div>
               </div>
 
-              <div className="space-y-3">
-                <p className="text-[13px] font-medium text-black/40">
-                  {t.keyReasonsLabel}
-                </p>
-                <ul className="space-y-2.5">
-                  {keyReasons.map((item) => (
-                    <li
-                      key={item}
-                      className="flex gap-2 text-[15px] leading-relaxed text-black/70"
-                    >
-                      <span
-                        className="mt-2 h-1 w-1 shrink-0 rounded-full bg-[color:var(--brand)]/50"
-                        aria-hidden
-                      />
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <p className="text-[12px] tabular-nums text-black/30">
+              <p className="text-[12px] leading-relaxed text-black/35">
                 {displayName} · {t.ansScoreSubtle} {result.score}
+                <span className="mx-1.5 text-black/20">·</span>
+                {t.hiringDemoNote}
               </p>
             </div>
-          </div>
+          </section>
 
-          {/* Layer 2 — Capability portrait */}
-          <div className="surface-card overflow-hidden rounded-[24px]">
-            <div className="space-y-8 px-6 py-8 sm:px-10 sm:py-10">
-              <p className="text-[13px] font-medium text-black/40">
-                {t.capabilityOverviewLabel}
-              </p>
-
-              <div className="grid gap-8 sm:grid-cols-2">
-                <div className="space-y-3">
-                  <p className="text-[13px] font-medium text-black/40">
-                    {t.strongAreasLabel}
-                  </p>
-                  <ul className="space-y-2">
-                    {strongAreas.map((d) => (
-                      <li
-                        key={d.key}
-                        className="text-[15px] leading-relaxed text-black/75"
-                      >
-                        {d.label}
-                        <span className="ml-2 tabular-nums text-black/35">
-                          {d.score}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                <div className="space-y-3">
-                  <p className="text-[13px] font-medium text-black/40">
-                    {t.developmentAreasLabel}
-                  </p>
-                  <ul className="space-y-2">
-                    {developmentAreas.map((d) => (
-                      <li
-                        key={d.key}
-                        className="text-[15px] leading-relaxed text-black/75"
-                      >
-                        {d.label}
-                        <span className="ml-2 tabular-nums text-black/35">
-                          {d.score}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-
-              <div className="space-y-5 border-t border-black/[0.06] pt-8">
-                <p className="text-[12px] font-medium tracking-wide text-black/30">
-                  {t.detailedScoresLabel}
-                </p>
-                {orderedDimensions.map((d) => (
-                  <DimensionBar key={d.key} label={d.label} score={d.score} />
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Layer 3 — Evidence Summary */}
-          <div className="surface-card rounded-[24px] px-6 py-8 sm:px-10">
+          {/* Layer 2 — Evidence */}
+          <section className="surface-card rounded-[24px] px-6 py-7 sm:px-8 sm:py-8">
             <p className="text-[13px] font-medium text-black/40">
               {t.evidenceSummaryLabel}
             </p>
-            <p className="mt-2 text-[13px] text-black/40">
+            <p className="mt-1.5 text-[13px] leading-relaxed text-black/40">
               {t.evidenceHighlightsIntro}
             </p>
             <p className="mt-4 text-[15px] leading-relaxed text-black/75">
               {evidenceSummary}
             </p>
-            {hiringReason && hiringReason !== evidenceSummary && (
-              <p className="mt-4 text-[14px] leading-relaxed text-black/55">
-                {hiringReason}
-              </p>
-            )}
+          </section>
 
-            <div className="mt-8 border-t border-black/[0.06] pt-8 text-center">
+          {/* Layer 3+4 — Strong / Validation as paired insight */}
+          <section className="surface-card rounded-[24px] px-6 py-7 sm:px-8 sm:py-8">
+            <p className="text-[13px] font-medium text-black/40">
+              {t.capabilitySignalLabel}
+            </p>
+            <p className="mt-1.5 text-[13px] leading-relaxed text-black/40">
+              {t.capabilitySignalIntro}
+            </p>
+
+            <div className="mt-6 space-y-4">
+              <p className="text-[12px] font-medium tracking-wide text-black/35">
+                {t.strongAreasLabel}
+              </p>
+              {strongAreaItems.map((item) => (
+                <div
+                  key={item.key}
+                  className="rounded-[16px] bg-[color:var(--surface-muted)]/70 px-4 py-4"
+                >
+                  <div className="flex items-baseline justify-between gap-3">
+                    <p className="text-[15px] font-medium text-black">
+                      {item.label}
+                    </p>
+                    <p className="shrink-0 text-[12px] tabular-nums text-black/40">
+                      {t.signalScoreLabel} {item.score}
+                    </p>
+                  </div>
+                  <p className="mt-2 text-[14px] leading-relaxed text-black/60">
+                    {item.note}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-8 space-y-4 border-t border-black/[0.06] pt-6">
+              <div className="space-y-1.5">
+                <p className="text-[12px] font-medium tracking-wide text-black/35">
+                  {t.validationAreasLabel}
+                </p>
+                <p className="text-[13px] leading-relaxed text-black/40">
+                  {t.validationAreasIntro}
+                </p>
+              </div>
+              {validationAreas.map((item) => (
+                <div
+                  key={item.key}
+                  className="rounded-[16px] border border-black/[0.06] bg-white px-4 py-4"
+                >
+                  <div className="flex items-baseline justify-between gap-3">
+                    <p className="text-[15px] font-medium text-black">
+                      {item.label}
+                    </p>
+                    <p className="shrink-0 text-[12px] tabular-nums text-black/40">
+                      {t.signalScoreLabel} {item.score}
+                    </p>
+                  </div>
+                  <p className="mt-2 text-[14px] leading-relaxed text-black/60">
+                    {item.note}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* Layer 5 — Detailed scores */}
+          <section className="surface-card rounded-[24px] px-6 py-7 sm:px-8 sm:py-8">
+            <p className="text-[13px] font-medium text-black/40">
+              {t.detailedScoresLabel}
+            </p>
+            <p className="mt-1.5 text-[13px] leading-relaxed text-black/40">
+              {t.aiWorkCapabilityIntro}
+            </p>
+            <div className="mt-6 space-y-6">
+              {orderedDimensions.map((d) => (
+                <DimensionBar key={d.key} label={d.label} score={d.score} />
+              ))}
+            </div>
+          </section>
+
+          {/* Layer 6 — Work style Profile */}
+          <section className="surface-card rounded-[24px] px-6 py-7 sm:px-8 sm:py-8">
+            <p className="text-[13px] font-medium text-black/40">
+              {t.workStyleSignalLabel}
+            </p>
+            <p className="mt-1.5 text-[13px] leading-relaxed text-black/40">
+              {t.workStyleSignalIntro}
+            </p>
+            <div className="mt-5 flex flex-wrap items-center gap-3">
+              <ProfileBadge profileId={result.profileId} size="md" />
+              <p className="text-[22px] font-semibold tracking-tight text-black">
+                {profileName}
+              </p>
+            </div>
+
+            <div className="mt-8 border-t border-black/[0.06] pt-6 text-center sm:text-left">
               <Link
                 href="/assessment"
                 className="brand-button inline-flex h-12 items-center justify-center rounded-full px-8 text-[15px] font-medium"
@@ -423,7 +398,7 @@ export function ResultPage() {
                 {t.retestCta}
               </Link>
             </div>
-          </div>
+          </section>
         </div>
       )}
 
