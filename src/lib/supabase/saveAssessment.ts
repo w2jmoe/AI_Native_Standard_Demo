@@ -21,6 +21,8 @@ export async function saveAssessmentRecord(options: {
   result: EvaluationResult;
   locale: "en" | "zh";
   displayName?: string | null;
+  /** Early Experiment channel tag from ?source=; null when absent. */
+  source?: string | null;
 }): Promise<void> {
   const supabase = getSupabaseAdmin();
   if (!supabase) {
@@ -30,16 +32,17 @@ export async function saveAssessmentRecord(options: {
     return;
   }
 
-  const { answers, result, locale, displayName } = options;
+  const { answers, result, locale, displayName, source } = options;
 
   // Keep Demo 1.0 columns; map 4 Evidence → existing text columns.
   // judgment_answer packs report extras as JSON (no schema rewrite).
-  // display_name is additive and nullable for backward compatibility.
+  // display_name / source are additive and nullable for backward compatibility.
   const { error } = await supabase.from("assessments").insert({
     locale,
     score: result.score,
     profile: result.profileId,
     display_name: resolveDisplayName(displayName),
+    source: source ?? null,
     problem_framing_score: dimensionScore(result, "problemFraming"),
     ai_collaboration_score: dimensionScore(result, "aiCollaboration"),
     judgment_score: dimensionScore(result, "judgment"),

@@ -1,6 +1,7 @@
 import type { AssessmentAnswers, EvaluationResult } from "@/types/assessment";
-import { ANS_SYSTEM_PROMPT, buildUserPrompt } from "./prompt";
+import { buildEvaluationPrompt } from "./buildEvaluationPrompt";
 import { parseEvaluationResult } from "./parse";
+import { getTaskConfig } from "@/lib/tasks";
 
 type ChatCompletionResponse = {
   choices?: Array<{
@@ -104,12 +105,16 @@ async function callChatCompletions(options: {
   apiKey: string;
   model: string;
   answers: AssessmentAnswers;
+  taskId?: string | null;
 }): Promise<string> {
-  const { endpoint, apiKey, model, answers } = options;
+  const { endpoint, apiKey, model, answers, taskId } = options;
+  const task = getTaskConfig(taskId);
+  const { system, user } = buildEvaluationPrompt(task, answers);
 
   if (isDev()) {
     console.log("[302 request] endpoint:", endpoint);
     console.log("[302 request] model:", model);
+    console.log("[302 request] taskId:", task.taskId);
   }
 
   let response: Response;
@@ -125,8 +130,8 @@ async function callChatCompletions(options: {
         model,
         temperature: 0.3,
         messages: [
-          { role: "system", content: ANS_SYSTEM_PROMPT },
-          { role: "user", content: buildUserPrompt(answers) },
+          { role: "system", content: system },
+          { role: "user", content: user },
         ],
         response_format: { type: "json_object" },
       }),
@@ -167,6 +172,7 @@ async function callChatCompletions(options: {
 export async function evaluateWith302(
   answers: AssessmentAnswers,
   _locale: "en" | "zh",
+  taskId?: string | null,
 ): Promise<EvaluationResult> {
   const { apiKey, baseUrl, model } = get302Config();
   const endpoint = `${baseUrl}/chat/completions`;
@@ -180,6 +186,7 @@ export async function evaluateWith302(
       apiKey,
       model,
       answers,
+      taskId,
     });
     return parseEvaluationResult(content);
   } catch (error) {
@@ -199,6 +206,7 @@ export async function evaluateWith302(
         apiKey,
         model,
         answers,
+        taskId,
       });
       return parseEvaluationResult(content);
     }

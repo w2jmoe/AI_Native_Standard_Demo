@@ -29,7 +29,7 @@ export const translations = {
         desc: "How you improve through feedback, data, and AI.",
       },
     ],
-    earlyExperiment: "Early Experiment v1.6",
+    earlyExperiment: "Early Experiment v1.7",
     earlyExperimentDesc:
       "Built to explore how AI-era work ability can be measured.",
     simulationLabel: "AI Work Simulation",
@@ -240,7 +240,7 @@ export const translations = {
         desc: "你如何通过反馈、数据和 AI 持续改进。",
       },
     ],
-    earlyExperiment: "早期实验 v1.6",
+    earlyExperiment: "早期实验 v1.7",
     earlyExperimentDesc: "用于探索如何衡量 AI 时代的工作能力。",
     simulationLabel: "AI 工作模拟",
     assessmentTitle: "AI 产品增长挑战",

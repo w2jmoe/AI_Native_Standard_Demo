@@ -1,15 +1,24 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { trackEvent } from "@/lib/analytics";
+import { captureSourceFromUrl } from "@/lib/tracking/source";
 
 export function LandingPage() {
   const { t } = useLanguage();
+  const [assessmentHref, setAssessmentHref] = useState("/assessment");
 
   useEffect(() => {
-    trackEvent("page_view", { page: "landing" });
+    const source = captureSourceFromUrl();
+    setAssessmentHref(
+      source ? `/assessment?source=${encodeURIComponent(source)}` : "/assessment",
+    );
+    trackEvent("page_view", {
+      page: "landing",
+      ...(source ? { source } : {}),
+    });
   }, []);
 
   return (
@@ -29,7 +38,7 @@ export function LandingPage() {
           </p>
           <div className="animate-fade-up animation-delay-300 mt-12">
             <Link
-              href="/assessment"
+              href={assessmentHref}
               onClick={() => trackEvent("start_assessment")}
               className="brand-button inline-flex h-12 items-center justify-center rounded-full px-8 text-[15px] font-medium"
             >

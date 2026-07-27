@@ -12,6 +12,10 @@ import {
 import { saveResultCache } from "@/lib/assessment/resultCache";
 import { trackEvent } from "@/lib/analytics";
 import {
+  captureSourceFromUrl,
+  readStoredSource,
+} from "@/lib/tracking/source";
+import {
   ASSESSMENT_STORAGE_KEY,
   EVALUATION_STORAGE_KEY,
   resolveDisplayName,
@@ -37,6 +41,7 @@ export function AssessmentForm() {
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
+    captureSourceFromUrl();
     const draft = loadAssessmentDraft();
     if (draft) {
       setAnswers(draftToAnswers(draft));
@@ -102,7 +107,11 @@ export function AssessmentForm() {
     e.preventDefault();
     setSubmitting(true);
     setError(null);
-    trackEvent("submit_assessment", { locale });
+    const source = readStoredSource();
+    trackEvent("submit_assessment", {
+      locale,
+      ...(source ? { source } : {}),
+    });
 
     const resolvedName = resolveDisplayName(displayName);
 
@@ -119,6 +128,7 @@ export function AssessmentForm() {
           answers,
           locale,
           displayName: resolvedName,
+          source,
         }),
       });
 

@@ -8,6 +8,7 @@ create table if not exists public.assessments (
   created_at timestamptz not null default now(),
   locale text not null,
   display_name text,
+  source text,
   score integer not null,
   profile text not null,
   problem_framing_score integer not null,
@@ -25,6 +26,10 @@ create table if not exists public.assessments (
 -- Safe additive migration for databases created before display_name existed.
 alter table public.assessments
   add column if not exists display_name text;
+
+-- Lightweight Early Experiment channel tag from URL ?source=
+alter table public.assessments
+  add column if not exists source text;
 
 alter table public.assessments enable row level security;
 

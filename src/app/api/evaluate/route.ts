@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { evaluateWith302 } from "@/lib/evaluation/client";
 import { saveAssessmentRecord } from "@/lib/supabase/saveAssessment";
+import { resolveTaskId } from "@/lib/tasks";
+import { normalizeSource } from "@/lib/tracking/source";
 import type { AssessmentAnswers } from "@/types/assessment";
 
 function isNonEmptyString(value: unknown): value is string {
@@ -60,6 +62,9 @@ export async function POST(request: Request) {
       answers?: unknown;
       locale?: string;
       displayName?: unknown;
+      source?: unknown;
+      /** Optional Work Simulation task; defaults to product-growth-v1. */
+      taskId?: unknown;
     };
 
     const answers = normalizeAnswers(body.answers);
@@ -76,7 +81,11 @@ export async function POST(request: Request) {
     const locale = body.locale === "zh" ? "zh" : "en";
     const displayName =
       typeof body.displayName === "string" ? body.displayName : "";
-    const result = await evaluateWith302(answers, locale);
+    const source = normalizeSource(body.source);
+    const taskId = resolveTaskId(
+      typeof body.taskId === "string" ? body.taskId : null,
+    );
+    const result = await evaluateWith302(answers, locale, taskId);
 
     // Fire-and-forget style with await + catch: never block user result.
     try {
@@ -85,6 +94,7 @@ export async function POST(request: Request) {
         result,
         locale,
         displayName,
+        source,
       });
     } catch (saveError) {
       console.error(
