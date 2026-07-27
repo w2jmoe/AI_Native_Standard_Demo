@@ -24,6 +24,7 @@ function buildShareText(options: {
   profileLabel: string;
   scoreLabel: string;
   cta: string;
+  footnote?: string;
 }) {
   const {
     displayName,
@@ -34,9 +35,10 @@ function buildShareText(options: {
     profileLabel,
     scoreLabel,
     cta,
+    footnote,
   } = options;
 
-  return [
+  const lines = [
     intro,
     "",
     profileLabel,
@@ -47,7 +49,14 @@ function buildShareText(options: {
     "",
     cta,
     url,
-  ].join("\n");
+  ];
+
+  const note = footnote?.trim();
+  if (note) {
+    lines.push("", note);
+  }
+
+  return lines.join("\n");
 }
 
 export function ShareCard({
@@ -80,6 +89,7 @@ export function ShareCard({
       profileLabel: t.shareTextProfileLabel,
       scoreLabel: t.shareTextScoreLabel,
       cta: t.shareTextCta,
+      footnote: t.shareTextFootnote,
     });
 
     try {
