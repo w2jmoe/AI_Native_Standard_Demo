@@ -20,11 +20,10 @@ import {
 } from "@/types/assessment";
 
 const emptyAnswers: AssessmentAnswers = {
-  problem: "",
-  collaboration: "",
-  solution: "",
-  judgment: "",
-  iteration: "",
+  problemAnalysis: "",
+  solutionProposal: "",
+  aiCollaborationEvidence: "",
+  iterationPlan: "",
 };
 
 export function AssessmentForm() {
@@ -55,38 +54,32 @@ export function AssessmentForm() {
   const fields: {
     key: keyof AssessmentAnswers;
     label: string;
+    prompt: string;
     placeholder: string;
-    hint: string;
   }[] = [
     {
-      key: "problem",
-      label: t.form.problem.label,
-      placeholder: t.form.problem.placeholder,
-      hint: t.form.problem.hint,
+      key: "problemAnalysis",
+      label: t.form.problemAnalysis.label,
+      prompt: t.form.problemAnalysis.prompt,
+      placeholder: t.form.problemAnalysis.placeholder,
     },
     {
-      key: "collaboration",
-      label: t.form.collaboration.label,
-      placeholder: t.form.collaboration.placeholder,
-      hint: t.form.collaboration.hint,
+      key: "solutionProposal",
+      label: t.form.solutionProposal.label,
+      prompt: t.form.solutionProposal.prompt,
+      placeholder: t.form.solutionProposal.placeholder,
     },
     {
-      key: "solution",
-      label: t.form.solution.label,
-      placeholder: t.form.solution.placeholder,
-      hint: t.form.solution.hint,
+      key: "aiCollaborationEvidence",
+      label: t.form.aiCollaborationEvidence.label,
+      prompt: t.form.aiCollaborationEvidence.prompt,
+      placeholder: t.form.aiCollaborationEvidence.placeholder,
     },
     {
-      key: "judgment",
-      label: t.form.judgment.label,
-      placeholder: t.form.judgment.placeholder,
-      hint: t.form.judgment.hint,
-    },
-    {
-      key: "iteration",
-      label: t.form.iteration.label,
-      placeholder: t.form.iteration.placeholder,
-      hint: t.form.iteration.hint,
+      key: "iterationPlan",
+      label: t.form.iterationPlan.label,
+      prompt: t.form.iterationPlan.prompt,
+      placeholder: t.form.iterationPlan.placeholder,
     },
   ];
 
@@ -122,7 +115,11 @@ export function AssessmentForm() {
       const response = await fetch("/api/evaluate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ answers, locale }),
+        body: JSON.stringify({
+          answers,
+          locale,
+          displayName: resolvedName,
+        }),
       });
 
       const data = (await response.json()) as EvaluationResult & {
@@ -157,6 +154,7 @@ export function AssessmentForm() {
 
   return (
     <div className="mx-auto w-full max-w-2xl px-5 py-12 sm:px-8 sm:py-20">
+      {/* Part 1 — Task Introduction */}
       <div className="space-y-8">
         <div className="space-y-4">
           <p className="text-[12px] font-medium uppercase tracking-[0.14em] text-black/40">
@@ -166,21 +164,104 @@ export function AssessmentForm() {
             {t.assessmentTitle}
           </h1>
           <p className="text-[17px] font-medium leading-snug text-black/75 sm:text-[18px]">
-            {t.assessmentTask}
+            {t.assessmentRole}
           </p>
         </div>
 
+        {/* Part 2 — Business Context */}
         <div className="surface-card rounded-[20px] px-5 py-6 sm:px-7 sm:py-7">
           <p className="text-[12px] font-medium uppercase tracking-[0.12em] text-black/35">
-            {t.assessmentRulesTitle}
+            {t.businessContextTitle}
           </p>
           <p className="mt-3 text-[14px] leading-relaxed text-black/55">
-            {t.assessmentRole}
+            {t.businessContextBody}
           </p>
-          <p className="mt-3 text-[14px] leading-relaxed text-black/45">
+          <p className="mt-5 text-[12px] font-medium uppercase tracking-[0.12em] text-black/35">
+            {t.businessContextGoalLabel}
+          </p>
+          <p className="mt-2 text-[15px] font-medium leading-relaxed text-black/75">
+            {t.businessContextGoal}
+          </p>
+          <p className="mt-5 text-[12px] font-medium uppercase tracking-[0.12em] text-black/35">
+            {t.constraintsTitle}
+          </p>
+          <p className="mt-2 text-[14px] leading-relaxed text-black/55">
+            {t.constraintsBody}
+          </p>
+          <p className="mt-5 text-[13px] leading-relaxed text-black/45">
             {t.assessmentRulesBody}
           </p>
-          <div className="mt-5 flex flex-wrap gap-2">
+        </div>
+
+        {/* Part 3 — Work Materials */}
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <h2 className="text-[18px] font-semibold tracking-tight text-black sm:text-[20px]">
+              {t.workMaterialsTitle}
+            </h2>
+            <p className="text-[14px] leading-relaxed text-black/45">
+              {t.workMaterialsIntro}
+            </p>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="rounded-[18px] border border-black/[0.06] bg-[color:var(--surface-muted)]/50 px-5 py-5">
+              <p className="text-[13px] font-medium text-black/70">
+                {t.userFeedbackTitle}
+              </p>
+              <ul className="mt-3 space-y-2.5">
+                {t.userFeedbackItems.map((item) => (
+                  <li
+                    key={item}
+                    className="flex gap-2 text-[13px] leading-relaxed text-black/55"
+                  >
+                    <span
+                      className="mt-2 h-1 w-1 shrink-0 rounded-full bg-[color:var(--brand)]/50"
+                      aria-hidden
+                    />
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="rounded-[18px] border border-black/[0.06] bg-[color:var(--surface-muted)]/50 px-5 py-5">
+              <p className="text-[13px] font-medium text-black/70">
+                {t.productDataTitle}
+              </p>
+              <ul className="mt-3 space-y-2.5">
+                {t.productDataItems.map((item) => (
+                  <li
+                    key={item}
+                    className="flex gap-2 text-[13px] leading-relaxed text-black/55"
+                  >
+                    <span
+                      className="mt-2 h-1 w-1 shrink-0 rounded-full bg-[color:var(--brand)]/50"
+                      aria-hidden
+                    />
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        {restored && (
+          <p className="text-[13px] text-black/40">{t.draftRestored}</p>
+        )}
+      </div>
+
+      {/* Part 4 — Work Deliverable */}
+      <form onSubmit={handleSubmit} className="mt-12 space-y-10 sm:mt-14">
+        <div className="space-y-2 border-b border-black/[0.06] pb-6">
+          <h2 className="text-[18px] font-semibold tracking-tight text-black sm:text-[20px]">
+            {t.evidenceSectionTitle}
+          </h2>
+          <p className="whitespace-pre-line text-[14px] leading-relaxed text-black/45">
+            {t.evidenceSectionIntro}
+          </p>
+          <div className="mt-4 flex flex-wrap gap-2">
             {t.assessmentSteps.map((step, index) => (
               <span
                 key={step}
@@ -195,30 +276,26 @@ export function AssessmentForm() {
           </div>
         </div>
 
-        {restored && (
-          <p className="text-[13px] text-black/40">{t.draftRestored}</p>
-        )}
-      </div>
-
-      <form onSubmit={handleSubmit} className="mt-12 space-y-10 sm:mt-14">
         {fields.map((field, index) => (
           <div key={field.key} className="space-y-3">
-            <label
-              htmlFor={field.key}
-              className="flex items-baseline gap-3 text-[15px] font-medium text-black"
-            >
-              <span className="tabular-nums text-[color:var(--brand)]/50">
-                {String(index + 1).padStart(2, "0")}
-              </span>
-              {field.label}
-            </label>
-            <p className="text-[13px] leading-relaxed text-black/35">
-              {field.hint}
-            </p>
+            <div className="space-y-1.5">
+              <label
+                htmlFor={field.key}
+                className="flex items-baseline gap-3 text-[15px] font-semibold text-black"
+              >
+                <span className="tabular-nums text-[color:var(--brand)]/50">
+                  {String(index + 1).padStart(2, "0")}
+                </span>
+                {field.label}
+              </label>
+              <p className="whitespace-pre-line text-[14px] leading-relaxed text-black/55">
+                {field.prompt}
+              </p>
+            </div>
             <textarea
               id={field.key}
               required
-              rows={5}
+              rows={6}
               value={answers[field.key]}
               onChange={(e) => updateField(field.key, e.target.value)}
               placeholder={field.placeholder}
@@ -269,6 +346,11 @@ export function AssessmentForm() {
           >
             {submitting ? t.submitting : t.submit}
           </button>
+          {submitting && (
+            <p className="mt-4 whitespace-pre-line text-[13px] leading-relaxed text-black/45 sm:max-w-sm">
+              {t.submittingHint}
+            </p>
+          )}
         </div>
       </form>
     </div>

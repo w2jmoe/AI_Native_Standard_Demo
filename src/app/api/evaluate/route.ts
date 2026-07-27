@@ -3,21 +3,55 @@ import { evaluateWith302 } from "@/lib/evaluation/client";
 import { saveAssessmentRecord } from "@/lib/supabase/saveAssessment";
 import type { AssessmentAnswers } from "@/types/assessment";
 
-function isValidAnswers(value: unknown): value is AssessmentAnswers {
+function isNonEmptyString(value: unknown): value is string {
+  return typeof value === "string" && value.trim().length > 0;
+}
+
+/** Demo 2.0 Evidence shape (preferred). */
+function isEvidenceAnswers(value: unknown): value is AssessmentAnswers {
   if (!value || typeof value !== "object") return false;
   const v = value as Record<string, unknown>;
   return (
-    typeof v.problem === "string" &&
-    typeof v.collaboration === "string" &&
-    typeof v.solution === "string" &&
-    typeof v.judgment === "string" &&
-    typeof v.iteration === "string" &&
-    v.problem.trim().length > 0 &&
-    v.collaboration.trim().length > 0 &&
-    v.solution.trim().length > 0 &&
-    v.judgment.trim().length > 0 &&
-    v.iteration.trim().length > 0
+    isNonEmptyString(v.problemAnalysis) &&
+    isNonEmptyString(v.solutionProposal) &&
+    isNonEmptyString(v.aiCollaborationEvidence) &&
+    isNonEmptyString(v.iterationPlan)
   );
+}
+
+/**
+ * Demo 1.0 five-field shape → map into Evidence for one release window.
+ * judgment is dropped (scored from overall evidence by the prompt).
+ */
+function fromLegacyAnswers(value: unknown): AssessmentAnswers | null {
+  if (!value || typeof value !== "object") return null;
+  const v = value as Record<string, unknown>;
+  if (
+    !isNonEmptyString(v.problem) ||
+    !isNonEmptyString(v.collaboration) ||
+    !isNonEmptyString(v.solution) ||
+    !isNonEmptyString(v.iteration)
+  ) {
+    return null;
+  }
+  return {
+    problemAnalysis: v.problem.trim(),
+    solutionProposal: v.solution.trim(),
+    aiCollaborationEvidence: v.collaboration.trim(),
+    iterationPlan: v.iteration.trim(),
+  };
+}
+
+function normalizeAnswers(value: unknown): AssessmentAnswers | null {
+  if (isEvidenceAnswers(value)) {
+    return {
+      problemAnalysis: value.problemAnalysis.trim(),
+      solutionProposal: value.solutionProposal.trim(),
+      aiCollaborationEvidence: value.aiCollaborationEvidence.trim(),
+      iterationPlan: value.iterationPlan.trim(),
+    };
+  }
+  return fromLegacyAnswers(value);
 }
 
 export async function POST(request: Request) {
@@ -25,24 +59,32 @@ export async function POST(request: Request) {
     const body = (await request.json()) as {
       answers?: unknown;
       locale?: string;
+      displayName?: unknown;
     };
 
-    if (!isValidAnswers(body.answers)) {
+    const answers = normalizeAnswers(body.answers);
+    if (!answers) {
       return NextResponse.json(
-        { error: "Invalid answers. All five fields are required." },
+        {
+          error:
+            "Invalid answers. Four Evidence fields are required: problemAnalysis, solutionProposal, aiCollaborationEvidence, iterationPlan.",
+        },
         { status: 400 },
       );
     }
 
     const locale = body.locale === "zh" ? "zh" : "en";
-    const result = await evaluateWith302(body.answers, locale);
+    const displayName =
+      typeof body.displayName === "string" ? body.displayName : "";
+    const result = await evaluateWith302(answers, locale);
 
     // Fire-and-forget style with await + catch: never block user result.
     try {
       await saveAssessmentRecord({
-        answers: body.answers,
+        answers,
         result,
         locale,
+        displayName,
       });
     } catch (saveError) {
       console.error(

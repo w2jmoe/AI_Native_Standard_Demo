@@ -6,7 +6,7 @@ import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { trackEvent } from "@/lib/analytics";
 
 export function LandingPage() {
-  const { t, locale } = useLanguage();
+  const { t } = useLanguage();
 
   useEffect(() => {
     trackEvent("page_view", { page: "landing" });
@@ -24,13 +24,10 @@ export function LandingPage() {
           <h1 className="animate-fade-up animation-delay-100 text-[40px] font-semibold leading-[1.08] tracking-[-0.03em] text-black sm:text-[64px]">
             {t.brand}
           </h1>
-          <p className="animate-fade-up animation-delay-200 mt-5 max-w-xl text-[22px] font-medium leading-snug tracking-[-0.01em] text-black/85 sm:text-[28px]">
-            {locale === "zh" ? t.heroSubtitle : t.tagline}
+          <p className="animate-fade-up animation-delay-200 mt-5 max-w-4xl text-[15px] font-medium leading-snug tracking-[-0.01em] text-black/70 sm:text-[18px] md:text-[20px]">
+            {t.tagline}
           </p>
-          <p className="animate-fade-up animation-delay-300 mt-5 max-w-lg text-[16px] leading-relaxed text-black/50 sm:text-[17px]">
-            {locale === "zh" ? t.tagline : t.heroSubtitle}
-          </p>
-          <div className="animate-fade-up animation-delay-400 mt-12">
+          <div className="animate-fade-up animation-delay-300 mt-12">
             <Link
               href="/assessment"
               onClick={() => trackEvent("start_assessment")}

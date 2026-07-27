@@ -1,11 +1,13 @@
 -- Run this in Supabase SQL Editor once.
--- Anonymous insert is allowed for early ANS research validation.
+-- ANS Demo 2.0 assessments schema.
+-- Anonymous insert is allowed for early research validation.
 -- No user login required.
 
 create table if not exists public.assessments (
   id uuid primary key default gen_random_uuid(),
   created_at timestamptz not null default now(),
   locale text not null,
+  display_name text,
   score integer not null,
   profile text not null,
   problem_framing_score integer not null,
@@ -19,6 +21,10 @@ create table if not exists public.assessments (
   judgment_answer text not null,
   iteration_answer text not null
 );
+
+-- Safe additive migration for databases created before display_name existed.
+alter table public.assessments
+  add column if not exists display_name text;
 
 alter table public.assessments enable row level security;
 

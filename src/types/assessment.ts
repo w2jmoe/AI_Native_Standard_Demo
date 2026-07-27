@@ -1,9 +1,9 @@
+/** Demo 2.0: four Evidence parts (Judgment is scored from evidence, not a separate input). */
 export type AssessmentAnswers = {
-  problem: string;
-  collaboration: string;
-  solution: string;
-  judgment: string;
-  iteration: string;
+  problemAnalysis: string;
+  solutionProposal: string;
+  aiCollaborationEvidence: string;
+  iterationPlan: string;
 };
 
 export type LocalizedText = {
@@ -36,6 +36,10 @@ export type EvaluationResult = {
   dimensions: EvaluationDimension[];
   strength: LocalizedText;
   growthOpportunity: LocalizedText;
+  /** Company View: concise summary of work evidence */
+  evidenceSummary: LocalizedText;
+  /** Company View: hiring-facing signal statement */
+  hiringSignal: LocalizedText;
 };
 
 export const ASSESSMENT_STORAGE_KEY = "ans-assessment-answers";

@@ -27,6 +27,16 @@ function clipText(value: string, max = 80): string {
   return [...trimmed].slice(0, max).join("").trim();
 }
 
+const FALLBACK_EVIDENCE_SUMMARY: LocalizedText = {
+  en: "Work evidence captured across problem framing, solution, AI collaboration, and iteration.",
+  zh: "已根据问题分析、方案、AI 协作与迭代计划汇总工作证据。",
+};
+
+const FALLBACK_HIRING_SIGNAL: LocalizedText = {
+  en: "Candidate shows emerging AI collaboration with room to strengthen independent judgment and ownership.",
+  zh: "候选人展现初步 AI 协作能力，独立判断与结果负责意识仍有提升空间。",
+};
+
 function extractJson(text: string): unknown {
   const trimmed = text.trim();
   try {
@@ -171,6 +181,11 @@ export function parseEvaluationResult(raw: string): EvaluationResult {
     });
   }
 
+  const evidenceSummary =
+    toLocalized(data.evidenceSummary, 200) ?? FALLBACK_EVIDENCE_SUMMARY;
+  const hiringSignal =
+    toLocalized(data.hiringSignal, 160) ?? FALLBACK_HIRING_SIGNAL;
+
   return {
     score: clampScore(data.score),
     profileId,
@@ -178,6 +193,8 @@ export function parseEvaluationResult(raw: string): EvaluationResult {
     dimensions,
     strength,
     growthOpportunity,
+    evidenceSummary,
+    hiringSignal,
   };
 }
 
@@ -199,7 +216,7 @@ export function normalizeCachedResult(raw: unknown): EvaluationResult | null {
       return parseEvaluationResult(JSON.stringify(data));
     }
 
-    // Legacy flat format
+    // Legacy flat format (Demo 1.0 cache may lack evidenceSummary / hiringSignal)
     const { profileId, profile } = parseProfile(data.profile);
     const strength = toLocalized(data.strength);
     const growthOpportunity = toLocalized(
@@ -214,6 +231,10 @@ export function normalizeCachedResult(raw: unknown): EvaluationResult | null {
       dimensions: parseDimensions(data.dimensions),
       strength,
       growthOpportunity,
+      evidenceSummary:
+        toLocalized(data.evidenceSummary, 200) ?? FALLBACK_EVIDENCE_SUMMARY,
+      hiringSignal:
+        toLocalized(data.hiringSignal, 160) ?? FALLBACK_HIRING_SIGNAL,
     };
   } catch {
     return null;

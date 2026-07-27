@@ -1,14 +1,13 @@
 import type { AssessmentAnswers } from "@/types/assessment";
 
-/** localStorage draft for in-progress assessment */
+/** localStorage draft for in-progress assessment (Demo 2.0 Evidence). */
 export type AssessmentDraft = {
   status: "in_progress";
   displayName: string;
-  problemFraming: string;
-  aiCollaboration: string;
-  solution: string;
-  judgment: string;
-  iteration: string;
+  problemAnalysis: string;
+  solutionProposal: string;
+  aiCollaborationEvidence: string;
+  iterationPlan: string;
   updatedAt: string;
 };
 
@@ -21,34 +20,59 @@ export function answersToDraft(
   return {
     status: "in_progress",
     displayName,
-    problemFraming: answers.problem,
-    aiCollaboration: answers.collaboration,
-    solution: answers.solution,
-    judgment: answers.judgment,
-    iteration: answers.iteration,
+    problemAnalysis: answers.problemAnalysis,
+    solutionProposal: answers.solutionProposal,
+    aiCollaborationEvidence: answers.aiCollaborationEvidence,
+    iterationPlan: answers.iterationPlan,
     updatedAt: new Date().toISOString(),
   };
 }
 
 export function draftToAnswers(draft: AssessmentDraft): AssessmentAnswers {
   return {
-    problem: draft.problemFraming ?? "",
-    collaboration: draft.aiCollaboration ?? "",
-    solution: draft.solution ?? "",
-    judgment: draft.judgment ?? "",
-    iteration: draft.iteration ?? "",
+    problemAnalysis: draft.problemAnalysis ?? "",
+    solutionProposal: draft.solutionProposal ?? "",
+    aiCollaborationEvidence: draft.aiCollaborationEvidence ?? "",
+    iterationPlan: draft.iterationPlan ?? "",
   };
 }
 
 function hasContent(draft: AssessmentDraft): boolean {
   return Boolean(
     draft.displayName?.trim() ||
-      draft.problemFraming.trim() ||
-      draft.aiCollaboration.trim() ||
-      draft.solution.trim() ||
-      draft.judgment.trim() ||
-      draft.iteration.trim(),
+      draft.problemAnalysis.trim() ||
+      draft.solutionProposal.trim() ||
+      draft.aiCollaborationEvidence.trim() ||
+      draft.iterationPlan.trim(),
   );
+}
+
+/** Map Demo 1.0 draft keys into Evidence shape when present. */
+function migrateLegacyDraft(raw: Record<string, unknown>): AssessmentDraft | null {
+  const problemAnalysis = String(
+    raw.problemAnalysis ?? raw.problemFraming ?? "",
+  );
+  const solutionProposal = String(raw.solutionProposal ?? raw.solution ?? "");
+  const aiCollaborationEvidence = String(
+    raw.aiCollaborationEvidence ?? raw.aiCollaboration ?? "",
+  );
+  const iterationPlan = String(raw.iterationPlan ?? raw.iteration ?? "");
+
+  const draft: AssessmentDraft = {
+    status: "in_progress",
+    displayName: String(raw.displayName ?? ""),
+    problemAnalysis,
+    solutionProposal,
+    aiCollaborationEvidence,
+    iterationPlan,
+    updatedAt:
+      typeof raw.updatedAt === "string"
+        ? raw.updatedAt
+        : new Date().toISOString(),
+  };
+
+  if (!hasContent(draft)) return null;
+  return draft;
 }
 
 export function loadAssessmentDraft(): AssessmentDraft | null {
@@ -56,13 +80,9 @@ export function loadAssessmentDraft(): AssessmentDraft | null {
   try {
     const raw = window.localStorage.getItem(ASSESSMENT_DRAFT_KEY);
     if (!raw) return null;
-    const parsed = JSON.parse(raw) as AssessmentDraft;
+    const parsed = JSON.parse(raw) as Record<string, unknown>;
     if (parsed.status !== "in_progress") return null;
-    if (!hasContent(parsed)) return null;
-    return {
-      ...parsed,
-      displayName: parsed.displayName ?? "",
-    };
+    return migrateLegacyDraft(parsed);
   } catch {
     return null;
   }
