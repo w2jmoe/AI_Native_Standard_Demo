@@ -197,9 +197,23 @@ export function ResultPage({ shareToken: shareTokenProp }: ResultPageProps) {
         </div>
       </div>
 
+      {!isSharedView ? (
+        <div className="surface-card mx-auto mt-8 max-w-3xl rounded-[24px] px-6 py-6 sm:px-8 sm:py-7">
+          <ShareCard
+            variant="panel"
+            displayName={displayName}
+            profile={profileName}
+            profileId={result.profileId}
+            score={result.score}
+            capability={strength}
+            shareToken={shareToken}
+          />
+        </div>
+      ) : null}
+
       {isPersonal ? (
         <>
-          {/* One portrait zone: identity + share action (no duplicated poster) */}
+          {/* One portrait zone: identity (share lives above tabs for both views) */}
           <div className="surface-card mx-auto mt-8 max-w-2xl rounded-[24px] px-6 py-8 sm:px-9 sm:py-10">
             <div className="text-center">
               <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-2">
@@ -241,20 +255,6 @@ export function ResultPage({ shareToken: shareTokenProp }: ResultPageProps) {
                 </p>
               </div>
             </div>
-
-            {!isSharedView ? (
-              <div className="mt-8 border-t border-black/[0.06] pt-6">
-                <ShareCard
-                  variant="cta"
-                  displayName={displayName}
-                  profile={profileName}
-                  profileId={result.profileId}
-                  score={result.score}
-                  capability={strength}
-                  shareToken={shareToken}
-                />
-              </div>
-            ) : null}
           </div>
 
           <div className="surface-card mx-auto mt-8 max-w-2xl overflow-hidden rounded-[24px]">

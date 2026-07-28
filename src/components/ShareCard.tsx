@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { trackEvent } from "@/lib/analytics";
 import { getProfileSymbol } from "./ProfileBadge";
@@ -13,8 +13,12 @@ type ShareCardProps = {
   capability: string;
   /** assessments.id — builds /profile/{token} share URL when present. */
   shareToken?: string | null;
-  /** "card" = poster preview; "cta" = share action only (no duplicated content). */
-  variant?: "card" | "cta";
+  /**
+   * card = poster preview
+   * cta = compact share row (legacy)
+   * panel = result-page share block with URL + hint
+   */
+  variant?: "card" | "cta" | "panel";
 };
 
 function buildShareText(options: {
@@ -73,27 +77,28 @@ export function ShareCard({
   const { t, locale } = useLanguage();
   const [toast, setToast] = useState<string | null>(null);
 
+  const shareUrl = useMemo(() => {
+    if (typeof window === "undefined" || !shareToken) return null;
+    return `${window.location.origin}/profile/${shareToken}`;
+  }, [shareToken]);
+
   useEffect(() => {
     if (!toast) return;
     const timer = window.setTimeout(() => setToast(null), 2200);
     return () => window.clearTimeout(timer);
   }, [toast]);
 
-  function buildShareUrl() {
-    if (typeof window === "undefined") return "https://";
-    const origin = window.location.origin;
-    if (shareToken) return `${origin}/profile/${shareToken}`;
-    return origin;
-  }
-
   async function handleCopy() {
-    const url = buildShareUrl();
+    if (!shareUrl) {
+      setToast(t.sharePending);
+      return;
+    }
 
     const text = buildShareText({
       displayName,
       profile,
       score,
-      url,
+      url: shareUrl,
       intro: t.shareTextIntro,
       profileLabel: t.shareTextProfileLabel,
       scoreLabel: t.shareTextScoreLabel,
@@ -110,21 +115,69 @@ export function ShareCard({
     }
   }
 
-  if (variant === "cta") {
+  async function handleCopyLinkOnly() {
+    if (!shareUrl) {
+      setToast(t.sharePending);
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      trackEvent("share_clicked", { locale });
+      setToast(t.shareCopiedToast);
+    } catch {
+      setToast(t.shareCopyFailed);
+    }
+  }
+
+  if (variant === "panel" || variant === "cta") {
     return (
-      <div className="relative flex flex-wrap items-center justify-between gap-3">
-        <p className="text-[13px] text-black/40">{t.shareTitle}</p>
-        <button
-          type="button"
-          onClick={handleCopy}
-          className="brand-button inline-flex h-11 items-center justify-center rounded-full px-7 text-[14px] font-medium"
-        >
-          {t.copyShareText}
-        </button>
+      <div className="relative space-y-4">
+        <div className="space-y-1.5">
+          <p className="text-[13px] font-medium text-black/40">{t.shareTitle}</p>
+          <p className="text-[13px] leading-relaxed text-black/45">
+            {t.shareProfileHint}
+          </p>
+        </div>
+
+        {shareUrl ? (
+          <div className="space-y-2">
+            <p className="text-[12px] font-medium text-black/35">
+              {t.shareUrlLabel}
+            </p>
+            <p className="break-all rounded-[14px] border border-black/[0.08] bg-[color:var(--surface-muted)]/70 px-4 py-3 font-mono text-[12px] leading-relaxed text-black/70 sm:text-[13px]">
+              {shareUrl}
+            </p>
+          </div>
+        ) : (
+          <p className="text-[13px] leading-relaxed text-black/50">
+            {t.sharePending}
+          </p>
+        )}
+
+        <div className="flex flex-wrap gap-3">
+          <button
+            type="button"
+            onClick={handleCopy}
+            disabled={!shareUrl}
+            className="brand-button inline-flex h-11 items-center justify-center rounded-full px-7 text-[14px] font-medium disabled:cursor-not-allowed disabled:opacity-45"
+          >
+            {t.copyShareText}
+          </button>
+          {shareUrl ? (
+            <button
+              type="button"
+              onClick={handleCopyLinkOnly}
+              className="inline-flex h-11 items-center justify-center rounded-full border border-black/[0.1] bg-white px-6 text-[14px] font-medium text-black/70 transition-colors hover:border-black/[0.18] hover:text-black"
+            >
+              {t.copyShareLink}
+            </button>
+          ) : null}
+        </div>
+
         {toast && (
           <div
             role="status"
-            className="pointer-events-none absolute left-1/2 top-full z-20 mt-3 w-max -translate-x-1/2 rounded-full bg-[#142033] px-4 py-2 text-[13px] text-white shadow-lg"
+            className="pointer-events-none absolute left-1/2 top-full z-20 mt-3 w-max max-w-[90vw] -translate-x-1/2 rounded-full bg-[#142033] px-4 py-2 text-center text-[13px] text-white shadow-lg"
           >
             {toast}
           </div>
@@ -184,7 +237,8 @@ export function ShareCard({
         <button
           type="button"
           onClick={handleCopy}
-          className="brand-button inline-flex h-11 items-center justify-center rounded-full px-7 text-[14px] font-medium"
+          disabled={!shareUrl}
+          className="brand-button inline-flex h-11 items-center justify-center rounded-full px-7 text-[14px] font-medium disabled:cursor-not-allowed disabled:opacity-45"
         >
           {t.copyShareText}
         </button>
@@ -193,7 +247,7 @@ export function ShareCard({
       {toast && (
         <div
           role="status"
-          className="pointer-events-none absolute left-1/2 top-full z-20 mt-4 w-max -translate-x-1/2 rounded-full bg-[#142033] px-4 py-2 text-[13px] text-white shadow-lg"
+          className="pointer-events-none absolute left-1/2 top-full z-20 mt-4 w-max max-w-[90vw] -translate-x-1/2 rounded-full bg-[#142033] px-4 py-2 text-center text-[13px] text-white shadow-lg"
         >
           {toast}
         </div>
