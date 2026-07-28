@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { evaluateWith302 } from "@/lib/evaluation/client";
+import { resolvePublicOrigin } from "@/lib/siteUrl";
 import { saveAssessmentRecord } from "@/lib/supabase/saveAssessment";
 import { resolveTaskId } from "@/lib/tasks";
 import { normalizeSource } from "@/lib/tracking/source";
@@ -103,6 +104,7 @@ export async function POST(request: Request) {
         displayName,
         source,
         taskId,
+        publicOrigin: resolvePublicOrigin(request),
       });
     } catch (saveError) {
       console.error(

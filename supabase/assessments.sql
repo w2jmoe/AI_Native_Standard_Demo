@@ -11,6 +11,7 @@ create table if not exists public.assessments (
   source text,
   task_id text,
   task_category text,
+  profile_url text,
   score integer not null,
   profile text not null,
   problem_framing_score integer not null,
@@ -39,6 +40,10 @@ alter table public.assessments
 
 alter table public.assessments
   add column if not exists task_category text;
+
+-- Persisted Candidate Profile Link for B2B share validation (nullable for legacy rows).
+alter table public.assessments
+  add column if not exists profile_url text;
 
 alter table public.assessments enable row level security;
 

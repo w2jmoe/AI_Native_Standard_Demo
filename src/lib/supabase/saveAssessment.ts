@@ -7,6 +7,7 @@ import {
   type EvaluationResult,
   type LocalizedText,
 } from "@/types/assessment";
+import { buildProfileUrl } from "@/lib/siteUrl";
 import { getTaskConfig } from "@/lib/tasks";
 import { getSupabaseAdmin } from "./client";
 
@@ -137,6 +138,8 @@ export async function saveAssessmentRecord(options: {
   source?: string | null;
   /** Resolved Work Simulation task id (e.g. product-growth-v1). */
   taskId?: string | null;
+  /** Public site origin for profile_url (e.g. https://example.com). */
+  publicOrigin?: string | null;
 }): Promise<string | null> {
   const supabase = getSupabaseAdmin();
   if (!supabase) {
@@ -146,13 +149,14 @@ export async function saveAssessmentRecord(options: {
     return null;
   }
 
-  const { answers, result, locale, displayName, source, taskId } = options;
+  const { answers, result, locale, displayName, source, taskId, publicOrigin } =
+    options;
   const task = getTaskConfig(taskId);
 
   // Keep Demo 1.0 columns; map 4 Evidence → existing text columns.
   // judgment_answer packs report snapshot for /profile/{id} reconstruction.
   // share token = primary key id (no extra column).
-  // task_id / task_category are additive nullable research tags.
+  // task_id / task_category / profile_url are additive research tags.
   const { data, error } = await supabase
     .from("assessments")
     .insert({
@@ -183,6 +187,22 @@ export async function saveAssessmentRecord(options: {
   }
 
   const id = typeof data?.id === "string" ? data.id : null;
+  if (!id) return null;
+
+  // Persist shareable Candidate Profile Link for B2B validation metrics.
+  const profileUrl = buildProfileUrl(publicOrigin, id);
+  const { error: urlError } = await supabase
+    .from("assessments")
+    .update({ profile_url: profileUrl })
+    .eq("id", id);
+
+  if (urlError) {
+    console.error(
+      "[supabase] Failed to save profile_url:",
+      urlError.message,
+    );
+  }
+
   return id;
 }
 
