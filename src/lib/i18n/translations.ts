@@ -3,8 +3,8 @@ export type Locale = "en" | "zh";
 export const translations = {
   en: {
     brand: "AI Native Standard",
-    tagline: "Evaluate how you solve real-world problems with AI.",
-    heroSubtitle: "Evaluate how you solve real-world problems with AI.",
+    tagline: "Evaluate how you think, work, and solve problems with AI.",
+    heroSubtitle: "Evaluate how you think, work, and solve problems with AI.",
     startCta: "Start Assessment",
     simulateTitle: "Choose an AI Work Simulation",
     simulateIntro:
@@ -266,8 +266,8 @@ export const translations = {
 
   zh: {
     brand: "AI时代工作能力评估",
-    tagline: "通过真实工作模拟，评估你如何使用 AI 解决问题并创造结果。",
-    heroSubtitle: "通过真实工作模拟，评估你如何使用 AI 解决问题并创造结果。",
+    tagline: "通过真实工作模拟，评估你如何思考、协作 AI 并解决问题。",
+    heroSubtitle: "通过真实工作模拟，评估你如何思考、协作 AI 并解决问题。",
     startCta: "开始测试",
     simulateTitle: "选择一次 AI 工作模拟",
     simulateIntro:
