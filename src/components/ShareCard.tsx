@@ -11,6 +11,8 @@ type ShareCardProps = {
   profileId: string;
   score: number;
   capability: string;
+  /** assessments.id — builds /profile/{token} share URL when present. */
+  shareToken?: string | null;
   /** "card" = poster preview; "cta" = share action only (no duplicated content). */
   variant?: "card" | "cta";
 };
@@ -65,6 +67,7 @@ export function ShareCard({
   profileId,
   score,
   capability,
+  shareToken = null,
   variant = "card",
 }: ShareCardProps) {
   const { t, locale } = useLanguage();
@@ -76,9 +79,15 @@ export function ShareCard({
     return () => window.clearTimeout(timer);
   }, [toast]);
 
+  function buildShareUrl() {
+    if (typeof window === "undefined") return "https://";
+    const origin = window.location.origin;
+    if (shareToken) return `${origin}/profile/${shareToken}`;
+    return origin;
+  }
+
   async function handleCopy() {
-    const url =
-      typeof window !== "undefined" ? window.location.origin : "https://";
+    const url = buildShareUrl();
 
     const text = buildShareText({
       displayName,

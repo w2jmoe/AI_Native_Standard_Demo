@@ -18,6 +18,7 @@ import {
   type EvaluationResult,
 } from "@/types/assessment";
 import { DimensionBar } from "./DimensionBar";
+import { ExperimentFeedback } from "./ExperimentFeedback";
 import { ProfileBadge } from "./ProfileBadge";
 import { ShareCard } from "./ShareCard";
 
@@ -31,33 +32,74 @@ const DIMENSION_ORDER: DimensionKey[] = [
   "iteration",
 ];
 
-export function ResultPage() {
+type ResultPageProps = {
+  /** When set, load shared report from /api/profile/{token}. */
+  shareToken?: string;
+};
+
+export function ResultPage({ shareToken: shareTokenProp }: ResultPageProps) {
   const { t, locale } = useLanguage();
   const [result, setResult] = useState<EvaluationResult | null>(null);
   const [displayName, setDisplayName] = useState("Anonymous");
+  const [shareToken, setShareToken] = useState<string | null>(
+    shareTokenProp ?? null,
+  );
   const [ready, setReady] = useState(false);
-  const [view, setView] = useState<ResultView>("personal");
+  const [view, setView] = useState<ResultView>("company");
 
   useEffect(() => {
-    try {
-      const cache = loadResultCache();
-      if (cache?.result) {
-        setResult(cache.result);
-        setDisplayName(cache.displayName);
-        setReady(true);
-        return;
-      }
+    let cancelled = false;
 
-      const raw = window.sessionStorage.getItem(EVALUATION_STORAGE_KEY);
-      if (raw) {
-        setResult(normalizeCachedResult(JSON.parse(raw)));
+    async function load() {
+      try {
+        if (shareTokenProp) {
+          const response = await fetch(
+            `/api/profile/${encodeURIComponent(shareTokenProp)}`,
+          );
+          if (!response.ok) {
+            if (!cancelled) setResult(null);
+            return;
+          }
+          const data = (await response.json()) as {
+            result?: unknown;
+            displayName?: string;
+            shareToken?: string;
+          };
+          const parsed = normalizeCachedResult(data.result);
+          if (!cancelled) {
+            setResult(parsed);
+            setDisplayName(data.displayName || "Anonymous");
+            setShareToken(data.shareToken || shareTokenProp);
+          }
+          return;
+        }
+
+        const cache = loadResultCache();
+        if (cache?.result) {
+          if (!cancelled) {
+            setResult(cache.result);
+            setDisplayName(cache.displayName);
+            setShareToken(cache.shareToken ?? null);
+          }
+          return;
+        }
+
+        const raw = window.sessionStorage.getItem(EVALUATION_STORAGE_KEY);
+        if (raw && !cancelled) {
+          setResult(normalizeCachedResult(JSON.parse(raw)));
+        }
+      } catch {
+        if (!cancelled) setResult(null);
+      } finally {
+        if (!cancelled) setReady(true);
       }
-    } catch {
-      setResult(null);
-    } finally {
-      setReady(true);
     }
-  }, []);
+
+    void load();
+    return () => {
+      cancelled = true;
+    };
+  }, [shareTokenProp]);
 
   if (!ready) {
     return (
@@ -71,16 +113,16 @@ export function ResultPage() {
     return (
       <div className="mx-auto flex min-h-[50vh] max-w-xl flex-col items-center justify-center px-5 text-center">
         <h1 className="text-[28px] font-semibold tracking-tight text-black sm:text-[36px]">
-          {t.noResultTitle}
+          {shareTokenProp ? t.sharedProfileMissingTitle : t.noResultTitle}
         </h1>
         <p className="mt-4 text-[16px] leading-relaxed text-black/50">
-          {t.noResultDesc}
+          {shareTokenProp ? t.sharedProfileMissingDesc : t.noResultDesc}
         </p>
         <Link
-          href="/assessment"
+          href={shareTokenProp ? "/" : "/assessment"}
           className="brand-button mt-10 inline-flex h-12 items-center justify-center rounded-full px-8 text-[15px] font-medium"
         >
-          {t.retryAssessment}
+          {shareTokenProp ? t.backHome : t.retryAssessment}
         </Link>
       </div>
     );
@@ -89,9 +131,6 @@ export function ResultPage() {
   const profileName = pickLocalized(result.profile, locale);
   const strength = pickLocalized(result.strength, locale);
   const growth = pickLocalized(result.growthOpportunity, locale);
-  const evidenceSummary =
-    pickLocalized(result.evidenceSummary, locale) ||
-    t.evidenceSummaryFallback;
   const workFit = buildAiWorkFitSignal(result, locale);
   const strongAreaItems = buildStrongAreas(result, locale);
   const validationAreas = buildValidationAreas(result, locale);
@@ -115,6 +154,7 @@ export function ResultPage() {
   });
 
   const isPersonal = view === "personal";
+  const isSharedView = Boolean(shareTokenProp);
 
   return (
     <div className="mx-auto w-full max-w-3xl px-5 py-12 sm:px-8 sm:py-20">
@@ -202,16 +242,19 @@ export function ResultPage() {
               </div>
             </div>
 
-            <div className="mt-8 border-t border-black/[0.06] pt-6">
-              <ShareCard
-                variant="cta"
-                displayName={displayName}
-                profile={profileName}
-                profileId={result.profileId}
-                score={result.score}
-                capability={strength}
-              />
-            </div>
+            {!isSharedView ? (
+              <div className="mt-8 border-t border-black/[0.06] pt-6">
+                <ShareCard
+                  variant="cta"
+                  displayName={displayName}
+                  profile={profileName}
+                  profileId={result.profileId}
+                  score={result.score}
+                  capability={strength}
+                  shareToken={shareToken}
+                />
+              </div>
+            ) : null}
           </div>
 
           <div className="surface-card mx-auto mt-8 max-w-2xl overflow-hidden rounded-[24px]">
@@ -224,14 +267,16 @@ export function ResultPage() {
               ))}
             </div>
 
-            <div className="border-t border-black/[0.06] px-6 py-8 text-center sm:px-10">
-              <Link
-                href="/assessment"
-                className="brand-button inline-flex h-12 items-center justify-center rounded-full px-8 text-[15px] font-medium"
-              >
-                {t.retestCta}
-              </Link>
-            </div>
+            {!isSharedView ? (
+              <div className="border-t border-black/[0.06] px-6 py-8 text-center sm:px-10">
+                <Link
+                  href="/assessment"
+                  className="brand-button inline-flex h-12 items-center justify-center rounded-full px-8 text-[15px] font-medium"
+                >
+                  {t.retestCta}
+                </Link>
+              </div>
+            ) : null}
           </div>
         </>
       ) : (
@@ -239,6 +284,28 @@ export function ResultPage() {
           {/* Layer 1 — AI Work Fit Signal */}
           <section className="surface-card rounded-[24px] px-6 py-7 sm:px-8 sm:py-8">
             <div className="space-y-5">
+              <div className="flex flex-wrap items-end justify-between gap-3 border-b border-black/[0.06] pb-5">
+                <div className="space-y-1">
+                  <p className="text-[12px] font-medium uppercase tracking-[0.12em] text-black/35">
+                    {t.candidateLabel}
+                  </p>
+                  <p className="text-[24px] font-semibold tracking-tight text-black sm:text-[28px]">
+                    {displayName}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-[12px] font-medium text-black/35">
+                    {t.ansScoreSubtle}
+                  </p>
+                  <p className="tabular-nums text-[28px] font-semibold tracking-tight text-[color:var(--brand)] sm:text-[32px]">
+                    {result.score}
+                    <span className="ml-1 text-[13px] font-normal text-black/35">
+                      /100
+                    </span>
+                  </p>
+                </div>
+              </div>
+
               <div className="space-y-1.5">
                 <p className="text-[12px] font-medium uppercase tracking-[0.12em] text-black/35">
                   {t.workFitSignalLabel}
@@ -277,27 +344,15 @@ export function ResultPage() {
               </div>
 
               <p className="text-[12px] leading-relaxed text-black/35">
-                {displayName} · {t.ansScoreSubtle} {result.score}
-                <span className="mx-1.5 text-black/20">·</span>
                 {t.hiringDemoNote}
               </p>
             </div>
           </section>
 
-          {/* Layer 2 — Evidence */}
-          <section className="surface-card rounded-[24px] px-6 py-7 sm:px-8 sm:py-8">
-            <p className="text-[13px] font-medium text-black/40">
-              {t.evidenceSummaryLabel}
-            </p>
-            <p className="mt-1.5 text-[13px] leading-relaxed text-black/40">
-              {t.evidenceHighlightsIntro}
-            </p>
-            <p className="mt-4 text-[15px] leading-relaxed text-black/75">
-              {evidenceSummary}
-            </p>
-          </section>
+          {/* Early Experiment feedback — high on Company View for B2B validation */}
+          <ExperimentFeedback />
 
-          {/* Layer 3+4 — Strong / Validation as paired insight */}
+          {/* Capability Signals — Strong / Validation */}
           <section className="surface-card rounded-[24px] px-6 py-7 sm:px-8 sm:py-8">
             <p className="text-[13px] font-medium text-black/40">
               {t.capabilitySignalLabel}
@@ -360,7 +415,7 @@ export function ResultPage() {
             </div>
           </section>
 
-          {/* Layer 5 — Detailed scores */}
+          {/* Detailed scores */}
           <section className="surface-card rounded-[24px] px-6 py-7 sm:px-8 sm:py-8">
             <p className="text-[13px] font-medium text-black/40">
               {t.detailedScoresLabel}
@@ -373,31 +428,17 @@ export function ResultPage() {
                 <DimensionBar key={d.key} label={d.label} score={d.score} />
               ))}
             </div>
-          </section>
 
-          {/* Layer 6 — Work style Profile */}
-          <section className="surface-card rounded-[24px] px-6 py-7 sm:px-8 sm:py-8">
-            <p className="text-[13px] font-medium text-black/40">
-              {t.workStyleSignalLabel}
-            </p>
-            <p className="mt-1.5 text-[13px] leading-relaxed text-black/40">
-              {t.workStyleSignalIntro}
-            </p>
-            <div className="mt-5 flex flex-wrap items-center gap-3">
-              <ProfileBadge profileId={result.profileId} size="md" />
-              <p className="text-[22px] font-semibold tracking-tight text-black">
-                {profileName}
-              </p>
-            </div>
-
-            <div className="mt-8 border-t border-black/[0.06] pt-6 text-center sm:text-left">
-              <Link
-                href="/assessment"
-                className="brand-button inline-flex h-12 items-center justify-center rounded-full px-8 text-[15px] font-medium"
-              >
-                {t.retestCta}
-              </Link>
-            </div>
+            {!isSharedView ? (
+              <div className="mt-8 border-t border-black/[0.06] pt-6 text-center sm:text-left">
+                <Link
+                  href="/assessment"
+                  className="brand-button inline-flex h-12 items-center justify-center rounded-full px-8 text-[15px] font-medium"
+                >
+                  {t.retestCta}
+                </Link>
+              </div>
+            ) : null}
           </section>
         </div>
       )}

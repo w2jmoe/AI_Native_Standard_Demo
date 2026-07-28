@@ -216,12 +216,15 @@ export function buildAiWorkFitSignal(
 ): AiWorkFitSignal {
   const strength = getSignalStrength(result.score);
   const tops = topDimensionKeys(result, 2);
-  const weak = weakDimensions(result);
   const topList = formatList(tops, locale);
-  const weakList = formatList(weak, locale);
   const growth = pickLocalized(result.growthOpportunity, locale).trim();
   const hiringText = pickLocalized(result.hiringSignal, locale).trim();
   const strengthText = pickLocalized(result.strength, locale).trim();
+  const gapKeys = [...result.dimensions]
+    .sort((a, b) => a.score - b.score)
+    .slice(0, 2)
+    .map((d) => d.name);
+  const gapList = formatList(gapKeys, locale);
 
   const strengthLabel =
     locale === "zh"
@@ -234,17 +237,17 @@ export function buildAiWorkFitSignal(
 
   if (locale === "zh") {
     if (strength === "strong") {
-      coreJudgment = `具备较强的 ${topList} 能力`;
+      coreJudgment = `AI 时代工作能力偏强，尤其在 ${topList}`;
       workValue =
-        "能够利用 AI 快速分析问题、形成判断并推进验证，适合需要高自主探索与 AI 协作的工作环境。";
+        "能用 AI 加快分析与推进，同时保留独立判断——适合高自主、强 AI 协作的工作环境。";
     } else if (strength === "moderate") {
-      coreJudgment = `已展现一定的 ${topList} 能力，整体仍在形成稳定 AI 工作流`;
+      coreJudgment = `AI 时代工作能力中等，${topList} 相对更好`;
       workValue =
-        "能在 AI 辅助下推进分析与方案，但关键判断与落地闭环仍需在真实协作中继续观察。";
+        "能在 AI 辅助下推进工作，但独立判断与闭环落地仍不够稳，暂不宜按强 AI Native 录用信号看。";
     } else {
-      coreJudgment = `AI 工作证据尚不充分，当前更偏探索阶段`;
+      coreJudgment = `AI 时代工作能力偏弱，当前证据不足以支撑强录用信号`;
       workValue =
-        "已开始尝试与 AI 协作，但在问题拆解、独立判断或持续推进上的信号仍偏弱，暂不宜作为强适配结论。";
+        "AI 协作与问题转化结果的证据偏薄——更像探索阶段，不宜作为简历/面试之外的强补充信号。";
     }
 
     if (strengthText) {
@@ -253,24 +256,22 @@ export function buildAiWorkFitSignal(
       coreJudgment = `${coreJudgment}。${hiringText}`;
     }
 
-    nextValidation = weakList
-      ? `建议结合真实项目经历，进一步验证 ${weakList}${growth ? `；同时关注：${growth}` : "。"}`
-      : growth
-        ? `建议结合真实项目经历进一步验证：${growth}`
-        : "建议结合真实项目经历，进一步验证长期执行与团队协作中的 AI 工作表现。";
+    nextValidation = growth
+      ? `相对短板在 ${gapList}。优先关注：${growth}`
+      : `相对短板在 ${gapList}——这些维度得分更低，进步空间更明确。`;
   } else {
     if (strength === "strong") {
-      coreJudgment = `Shows relatively strong ${topList} in AI-native work`;
+      coreJudgment = `Stronger AI-era work capability, especially in ${topList}`;
       workValue =
-        "Can use AI to analyze problems, form judgment, and drive validation — a fit for environments that need autonomous exploration with AI.";
+        "Uses AI to speed analysis and execution while keeping independent judgment — fit for high-autonomy, AI-collaborative environments.";
     } else if (strength === "moderate") {
-      coreJudgment = `Shows emerging ${topList}, with an AI workflow still stabilizing`;
+      coreJudgment = `Moderate AI-era work capability; ${topList} relatively better`;
       workValue =
-        "Can move analysis and proposals with AI support, but ownership of judgment and follow-through still needs observation in real collaboration.";
+        "Can progress with AI support, but judgment ownership and follow-through are not yet strong enough for a strong AI-native hire signal.";
     } else {
-      coreJudgment = `AI work evidence is still thin — more exploration than proven capability`;
+      coreJudgment = `Weaker AI-era work capability — evidence is too thin for a strong hiring signal`;
       workValue =
-        "Starting to collaborate with AI, but signals on problem framing, independent judgment, or sustained follow-through remain weak for a strong fit conclusion.";
+        "Limited proof of turning problems into results with AI — more exploratory than hire-ready beyond resume/interview.";
     }
 
     if (strengthText) {
@@ -279,11 +280,9 @@ export function buildAiWorkFitSignal(
       coreJudgment = `${coreJudgment}. ${hiringText}`;
     }
 
-    nextValidation = weakList
-      ? `Validate further in real project work: ${weakList}${growth ? `; also watch: ${growth}` : "."}`
-      : growth
-        ? `Validate further in real project work: ${growth}`
-        : "Validate further in real project work — especially sustained execution and how they collaborate with others while using AI.";
+    nextValidation = growth
+      ? `Relative weak spots: ${gapList}. Focus: ${growth}`
+      : `Relative weak spots: ${gapList} — these scored lower and show clearer room to improve.`;
   }
 
   return {
@@ -311,50 +310,48 @@ export type StrongAreaItem = {
 
 const STRONG_NOTES: Record<DimensionKey, { en: string; zh: string }> = {
   problemFraming: {
-    en: "Clearer evidence of defining the real problem before jumping to solutions — a useful AI-native working habit.",
-    zh: "工作证据更清晰地体现：先界定真实问题，再进入方案——这是可观察的 AI Native 工作习惯。",
+    en: "Strong at defining the real problem before jumping to solutions — a clear AI-native working habit.",
+    zh: "优势明显：先界定真实问题再给方案——这是清晰可辨的 AI Native 工作习惯。",
   },
   aiCollaboration: {
-    en: "Clearer evidence of using AI to amplify analysis while keeping direction and ownership.",
-    zh: "工作证据更清晰地体现：用 AI 放大分析效率，同时仍保有方向与主导权。",
+    en: "Uses AI to amplify analysis while keeping direction and ownership — not outsourcing judgment.",
+    zh: "优势明显：用 AI 放大分析效率，同时仍主导方向与关键判断。",
   },
   judgment: {
-    en: "Clearer evidence of owning trade-offs and deciding what to keep, discard, or challenge from AI output.",
-    zh: "工作证据更清晰地体现：能对 AI 输出做取舍，并承担关键判断。",
+    en: "Owns trade-offs: decides what to keep, discard, or challenge from AI output.",
+    zh: "优势明显：能对 AI 输出做取舍，并承担关键判断。",
   },
   execution: {
-    en: "Clearer evidence of turning insight into a concrete first-stage plan that can be acted on.",
-    zh: "工作证据更清晰地体现：能把洞察落成可推进的第一阶段行动方案。",
+    en: "Turns insight into a concrete first-stage plan that can be acted on.",
+    zh: "优势明显：能把洞察落成可推进的第一阶段行动。",
   },
   iteration: {
-    en: "Clearer evidence of thinking beyond the first plan — what to measure and how to adjust next.",
-    zh: "工作证据更清晰地体现：不只给一版方案，还能想到如何衡量与继续调整。",
+    en: "Thinks beyond the first plan — what to measure and how to adjust next.",
+    zh: "优势明显：不只给一版方案，还能想到如何衡量与继续调整。",
   },
 };
 
-const VALIDATION_NOTES: Record<
-  DimensionKey,
-  { en: string; zh: string }
-> = {
+/** Relative weak spots — all dimensions were scored; these are lower this run. */
+const GROWTH_NOTES: Record<DimensionKey, { en: string; zh: string }> = {
   problemFraming: {
-    en: "Problem framing appeared in the submission; further validate how the candidate reframes messy, conflicting inputs under real constraints.",
-    zh: "问题定义已有体现，建议进一步验证在信息冲突或约束更复杂时如何重新框定问题。",
+    en: "Weaker relative to other dimensions: problem framing is thinner — still leans surface restatement over sharp diagnosis.",
+    zh: "相对短板：问题定义偏弱——仍偏表面复述，锐利诊断不足。",
   },
   aiCollaboration: {
-    en: "AI collaboration was visible; further validate how tool choice, prompting, and quality checks hold up across longer work loops.",
-    zh: "AI 协作已有体现，建议进一步验证在更长工作周期中如何选择工具、组织协作并校验 AI 输出。",
+    en: "Weaker relative to other dimensions: AI collaboration is shallow — limited evidence of using AI to amplify real work while staying in control.",
+    zh: "相对短板：AI 协作偏浅——用 AI 放大真实工作、同时保持主导的证据不足。",
   },
   judgment: {
-    en: "Key judgment was present; further validate decision-making under competing trade-offs and incomplete information.",
-    zh: "关键判断已有体现，建议进一步验证复杂约束与信息不完整时的决策过程。",
+    en: "Weaker relative to other dimensions: independent judgment is softer — trade-offs and ownership of decisions need more rigor.",
+    zh: "相对短板：独立判断偏弱——取舍理由与决策归属仍不够扎实。",
   },
   execution: {
-    en: "An actionable plan was sketched; further validate how the first steps are owned, sequenced, and delivered in practice.",
-    zh: "已提出可执行方向，建议进一步验证第一步行动的拆解、推进与落地闭环。",
+    en: "Weaker relative to other dimensions: execution is less concrete — first steps, priority, and ownership need tightening.",
+    zh: "相对短板：执行落地偏虚——优先级、第一步与推进归属仍需收紧。",
   },
   iteration: {
-    en: "A validation approach was mentioned; further validate the path after a miss — metrics, learning loops, and data-driven adjustment.",
-    zh: "本次任务中提出了验证方案，但对于失败后的迭代路径和数据驱动调整过程展示较少。",
+    en: "Weaker relative to other dimensions: iteration loop is thin — metrics, failure path, and data-driven adjustment are under-specified.",
+    zh: "相对短板：迭代闭环偏弱——指标、失败路径与数据驱动调整写得不够。",
   },
 };
 
@@ -389,7 +386,7 @@ export function buildStrongAreas(
 }
 
 /**
- * Lowest 1–2 dimensions as Validation Areas (signals to probe next — not weaknesses).
+ * Lowest 1–2 dimensions as relative weak spots (all five were scored).
  */
 export function buildValidationAreas(
   result: EvaluationResult,
@@ -406,13 +403,13 @@ export function buildValidationAreas(
   const growth = pickLocalized(result.growthOpportunity, locale).trim();
 
   return picks.map((item, index) => {
-    const base = VALIDATION_NOTES[item.key];
+    const base = GROWTH_NOTES[item.key];
     let note = locale === "zh" ? base.zh : base.en;
     if (index === 0 && growth) {
       note =
         locale === "zh"
-          ? `${note} 可结合成长信号继续观察：${growth}`
-          : `${note} Also useful to probe: ${growth}`;
+          ? `${note} 具体关注：${growth}`
+          : `${note} Focus: ${growth}`;
     }
     return {
       key: item.key,

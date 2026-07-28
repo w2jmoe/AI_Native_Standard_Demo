@@ -18,7 +18,6 @@ import {
 import {
   ASSESSMENT_STORAGE_KEY,
   EVALUATION_STORAGE_KEY,
-  resolveDisplayName,
   type AssessmentAnswers,
   type EvaluationResult,
 } from "@/types/assessment";
@@ -105,15 +104,22 @@ export function AssessmentForm() {
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    setSubmitting(true);
     setError(null);
+
+    const trimmedName = displayName.trim();
+    if (!trimmedName) {
+      setError(t.displayNameRequired);
+      return;
+    }
+
+    setSubmitting(true);
     const source = readStoredSource();
     trackEvent("submit_assessment", {
       locale,
       ...(source ? { source } : {}),
     });
 
-    const resolvedName = resolveDisplayName(displayName);
+    const resolvedName = trimmedName;
 
     window.sessionStorage.setItem(
       ASSESSMENT_STORAGE_KEY,
@@ -134,22 +140,32 @@ export function AssessmentForm() {
 
       const data = (await response.json()) as EvaluationResult & {
         error?: string;
+        shareToken?: string | null;
       };
 
       if (!response.ok) {
         throw new Error(mapErrorMessage(data.error || t.evaluateError));
       }
 
+      const { shareToken, error: _ignored, ...result } = data;
+      const evaluation = result as EvaluationResult;
+
       trackEvent("evaluation_completed", {
         locale,
-        score: data.score,
+        score: evaluation.score,
       });
 
       clearAssessmentDraft();
-      saveResultCache(answers, data, locale, resolvedName);
+      saveResultCache(
+        answers,
+        evaluation,
+        locale,
+        resolvedName,
+        shareToken ?? null,
+      );
       window.sessionStorage.setItem(
         EVALUATION_STORAGE_KEY,
-        JSON.stringify(data),
+        JSON.stringify(evaluation),
       );
       router.push("/result");
     } catch (err) {
@@ -320,6 +336,7 @@ export function AssessmentForm() {
             className="text-[15px] font-medium text-black"
           >
             {t.displayNameLabel}
+            <span className="ml-1 text-[color:var(--brand)]">*</span>
           </label>
           <p className="text-[13px] leading-relaxed text-black/35">
             {t.displayNameHint}
@@ -327,6 +344,7 @@ export function AssessmentForm() {
           <input
             id="displayName"
             type="text"
+            required
             value={displayName}
             onChange={(e) => {
               setDisplayName(e.target.value);
@@ -334,6 +352,7 @@ export function AssessmentForm() {
             }}
             placeholder={t.displayNamePlaceholder}
             maxLength={40}
+            autoComplete="name"
             className="w-full rounded-2xl border border-black/[0.08] bg-white px-4 py-3.5 text-[15px] leading-relaxed text-black outline-none transition-shadow placeholder:text-black/30 focus:border-[color:var(--brand)]/35 focus:shadow-[0_0_0_3px_var(--brand-glow)]"
           />
         </div>

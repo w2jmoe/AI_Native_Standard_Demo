@@ -80,16 +80,23 @@ export async function POST(request: Request) {
 
     const locale = body.locale === "zh" ? "zh" : "en";
     const displayName =
-      typeof body.displayName === "string" ? body.displayName : "";
+      typeof body.displayName === "string" ? body.displayName.trim() : "";
+    if (!displayName) {
+      return NextResponse.json(
+        { error: "Display name is required." },
+        { status: 400 },
+      );
+    }
     const source = normalizeSource(body.source);
     const taskId = resolveTaskId(
       typeof body.taskId === "string" ? body.taskId : null,
     );
     const result = await evaluateWith302(answers, locale, taskId);
 
+    let shareToken: string | null = null;
     // Fire-and-forget style with await + catch: never block user result.
     try {
-      await saveAssessmentRecord({
+      shareToken = await saveAssessmentRecord({
         answers,
         result,
         locale,
@@ -103,7 +110,8 @@ export async function POST(request: Request) {
       );
     }
 
-    return NextResponse.json(result);
+    // EvaluationResult shape unchanged; shareToken is additive for share links.
+    return NextResponse.json({ ...result, shareToken });
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Evaluation failed.";

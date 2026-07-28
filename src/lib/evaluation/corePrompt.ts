@@ -55,11 +55,19 @@ For profile.en, use EXACTLY one of:
 For profile.zh, use the matching natural Chinese label:
 "AI 策略者" | "AI 探索者" | "AI 执行者" | "AI 架构者" | "平衡型 AI Native"`;
 
-export const ANS_CORE_FEEDBACK_AND_OUTPUT = `## Feedback fields
+export const ANS_CORE_FEEDBACK_AND_OUTPUT = `## Feedback fields (hiring-useful, precise — no fluff)
 
-- strength / growthOpportunity: personal growth advice. Keep each language version within 80 characters. No pass/fail framing.
-- evidenceSummary: bilingual summary of the candidate's work evidence (what they analyzed, proposed, how they used AI, how they would iterate). Keep each language within 200 characters. Factual and hiring-useful.
-- hiringSignal: bilingual one-sentence hiring signal for employers. Keep each language within 160 characters. Example tone: "Candidate demonstrates strong ability to collaborate with AI while maintaining independent judgment and ownership."
+Write for recruiters deciding whether this person can use AI to amplify capability and turn problems into results.
+
+- strength: ONE concrete strength observed in the evidence. Direct. No soft hedging. ≤ 80 characters per language.
+- growthOpportunity: ONE concrete relative weakness / improvement need. Say what is weaker and why it matters for AI-era work. Do NOT say "not fully shown" or "needs further validation" as if unscored. ≤ 80 characters per language.
+- evidenceSummary: bilingual factual summary of what they did (problem → action → AI use → iteration). Hiring-useful, not essay. ≤ 200 characters per language.
+- hiringSignal: ONE clear employer-facing sentence: strong / moderate / weak AI-era work signal + why. No vague corporate filler. ≤ 160 characters per language.
+
+Tone rules:
+- Prefer clear judgments over polite ambiguity.
+- Do not pad length. Do not hedge every claim.
+- Do not invent evidence that was not submitted.
 
 ## Bilingual output (required)
 

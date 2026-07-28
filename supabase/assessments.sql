@@ -46,3 +46,12 @@ create policy "Allow anonymous insert assessments"
 --   for select
 --   to authenticated
 --   using (true);
+
+-- Public share links: /profile/{id} loads via server API (anon key).
+-- Token = assessments.id (uuid). No login; security via unlisted UUID.
+drop policy if exists "Allow anonymous select assessments for share" on public.assessments;
+create policy "Allow anonymous select assessments for share"
+  on public.assessments
+  for select
+  to anon
+  using (true);
