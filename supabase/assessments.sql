@@ -9,6 +9,8 @@ create table if not exists public.assessments (
   locale text not null,
   display_name text,
   source text,
+  task_id text,
+  task_category text,
   score integer not null,
   profile text not null,
   problem_framing_score integer not null,
@@ -30,6 +32,13 @@ alter table public.assessments
 -- Lightweight Early Experiment channel tag from URL ?source=
 alter table public.assessments
   add column if not exists source text;
+
+-- Work Simulation task tags for multi-task research (nullable for legacy rows).
+alter table public.assessments
+  add column if not exists task_id text;
+
+alter table public.assessments
+  add column if not exists task_category text;
 
 alter table public.assessments enable row level security;
 

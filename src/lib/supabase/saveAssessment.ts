@@ -7,6 +7,7 @@ import {
   type EvaluationResult,
   type LocalizedText,
 } from "@/types/assessment";
+import { getTaskConfig } from "@/lib/tasks";
 import { getSupabaseAdmin } from "./client";
 
 const DIMENSION_KEYS: DimensionKey[] = [
@@ -134,6 +135,8 @@ export async function saveAssessmentRecord(options: {
   displayName?: string | null;
   /** Early Experiment channel tag from ?source=; null when absent. */
   source?: string | null;
+  /** Resolved Work Simulation task id (e.g. product-growth-v1). */
+  taskId?: string | null;
 }): Promise<string | null> {
   const supabase = getSupabaseAdmin();
   if (!supabase) {
@@ -143,11 +146,13 @@ export async function saveAssessmentRecord(options: {
     return null;
   }
 
-  const { answers, result, locale, displayName, source } = options;
+  const { answers, result, locale, displayName, source, taskId } = options;
+  const task = getTaskConfig(taskId);
 
   // Keep Demo 1.0 columns; map 4 Evidence → existing text columns.
   // judgment_answer packs report snapshot for /profile/{id} reconstruction.
   // share token = primary key id (no extra column).
+  // task_id / task_category are additive nullable research tags.
   const { data, error } = await supabase
     .from("assessments")
     .insert({
@@ -156,6 +161,8 @@ export async function saveAssessmentRecord(options: {
       profile: result.profileId,
       display_name: resolveDisplayName(displayName),
       source: source ?? null,
+      task_id: task.taskId,
+      task_category: task.category ?? null,
       problem_framing_score: dimensionScore(result, "problemFraming"),
       ai_collaboration_score: dimensionScore(result, "aiCollaboration"),
       judgment_score: dimensionScore(result, "judgment"),

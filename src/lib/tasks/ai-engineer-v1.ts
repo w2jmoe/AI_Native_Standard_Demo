@@ -6,6 +6,7 @@ import type { TaskEvaluationConfig } from "./types";
  */
 export const AI_ENGINEER_V1: TaskEvaluationConfig = {
   taskId: "ai-engineer-v1",
+  category: "engineering",
   taskName: {
     en: "AI Engineering Work Simulation",
     zh: "AI 工程工作模拟",

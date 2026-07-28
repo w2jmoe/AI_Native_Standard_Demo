@@ -6,6 +6,7 @@ import type { TaskEvaluationConfig } from "./types";
  */
 export const PRODUCT_GROWTH_V1: TaskEvaluationConfig = {
   taskId: "product-growth-v1",
+  category: "product",
   taskName: {
     en: "AI Product Growth Challenge",
     zh: "AI 产品增长挑战",

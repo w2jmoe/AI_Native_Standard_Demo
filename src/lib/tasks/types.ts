@@ -34,6 +34,8 @@ export type TaskMaterialBlock = {
  */
 export type TaskEvaluationConfig = {
   taskId: string;
+  /** Market / research bucket, e.g. "product" | "engineering". */
+  category?: string;
   taskName: LocalizedText;
   role: LocalizedText;
   situation: LocalizedText;
