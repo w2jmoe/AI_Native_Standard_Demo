@@ -222,7 +222,9 @@ export function ResultPage({ shareToken: shareTokenProp }: ResultPageProps) {
                   {profileName}
                 </p>
               </div>
-              <p className="mt-2 text-[14px] text-black/45">{displayName}</p>
+              <p className="mt-3 text-[18px] font-medium tracking-tight text-black sm:text-[20px]">
+                {displayName}
+              </p>
 
               <div className="mt-6">
                 <p className="text-[13px] font-medium text-black/40">
