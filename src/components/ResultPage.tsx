@@ -119,7 +119,7 @@ export function ResultPage({ shareToken: shareTokenProp }: ResultPageProps) {
           {shareTokenProp ? t.sharedProfileMissingDesc : t.noResultDesc}
         </p>
         <Link
-          href={shareTokenProp ? "/" : "/assessment"}
+          href={shareTokenProp ? "/" : "/simulate"}
           className="brand-button mt-10 inline-flex h-12 items-center justify-center rounded-full px-8 text-[15px] font-medium"
         >
           {shareTokenProp ? t.backHome : t.retryAssessment}
@@ -270,7 +270,7 @@ export function ResultPage({ shareToken: shareTokenProp }: ResultPageProps) {
             {!isSharedView ? (
               <div className="border-t border-black/[0.06] px-6 py-8 text-center sm:px-10">
                 <Link
-                  href="/assessment"
+                  href="/simulate"
                   className="brand-button inline-flex h-12 items-center justify-center rounded-full px-8 text-[15px] font-medium"
                 >
                   {t.retestCta}
@@ -432,7 +432,7 @@ export function ResultPage({ shareToken: shareTokenProp }: ResultPageProps) {
             {!isSharedView ? (
               <div className="mt-8 border-t border-black/[0.06] pt-6 text-center sm:text-left">
                 <Link
-                  href="/assessment"
+                  href="/simulate"
                   className="brand-button inline-flex h-12 items-center justify-center rounded-full px-8 text-[15px] font-medium"
                 >
                   {t.retestCta}

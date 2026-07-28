@@ -6,6 +6,16 @@ export const translations = {
     tagline: "Evaluate how you solve real-world problems with AI.",
     heroSubtitle: "Evaluate how you solve real-world problems with AI.",
     startCta: "Start Assessment",
+    simulateTitle: "Choose an AI Work Simulation",
+    simulateIntro:
+      "Same ANS capability model. Different work contexts. Pick the simulation that matches the role you want to explore.",
+    simulateDimensionsLabel: "ANS Core Capability",
+    simulateDimensionsIntro:
+      "Every simulation evaluates the same five dimensions — not a job title quiz.",
+    simulateTaskLabel: "Work Simulation",
+    simulateRoleLabel: "Role:",
+    simulateStartTask: "Start this simulation",
+    simulateChangeTask: "← Choose another simulation",
     evaluateTitle: "What we evaluate",
     dimensions: [
       {
@@ -29,7 +39,7 @@ export const translations = {
         desc: "How you improve through feedback, data, and AI.",
       },
     ],
-    earlyExperiment: "Early Experiment v1.8",
+    earlyExperiment: "Early Experiment v1.9.0",
     earlyExperimentDesc:
       "Built to explore how AI-era work ability can be measured.",
     simulationLabel: "AI Work Simulation",
@@ -257,6 +267,16 @@ export const translations = {
     tagline: "通过真实工作模拟，评估你如何使用 AI 解决问题并创造结果。",
     heroSubtitle: "通过真实工作模拟，评估你如何使用 AI 解决问题并创造结果。",
     startCta: "开始测试",
+    simulateTitle: "选择一次 AI 工作模拟",
+    simulateIntro:
+      "同一套 ANS 能力模型，不同工作场景。选择你想探索的模拟任务。",
+    simulateDimensionsLabel: "ANS 核心能力",
+    simulateDimensionsIntro:
+      "每个模拟都评估同一套五维能力——不是岗位名称考试。",
+    simulateTaskLabel: "工作模拟",
+    simulateRoleLabel: "角色：",
+    simulateStartTask: "开始此模拟",
+    simulateChangeTask: "← 选择其他模拟",
     evaluateTitle: "我们评估什么",
     dimensions: [
       {
@@ -280,7 +300,7 @@ export const translations = {
         desc: "你如何通过反馈、数据和 AI 持续改进。",
       },
     ],
-    earlyExperiment: "早期实验 v1.8",
+    earlyExperiment: "早期实验 v1.9.0",
     earlyExperimentDesc: "用于探索如何衡量 AI 时代的工作能力。",
     simulationLabel: "AI 工作模拟",
     assessmentTitle: "AI 产品增长挑战",

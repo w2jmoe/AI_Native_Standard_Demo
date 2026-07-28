@@ -1,3 +1,4 @@
+import { AI_ENGINEER_V1 } from "./ai-engineer-v1";
 import { PRODUCT_GROWTH_V1 } from "./product-growth-v1";
 import type { TaskEvaluationConfig } from "./types";
 
@@ -11,7 +12,13 @@ export const DEFAULT_TASK_ID = PRODUCT_GROWTH_V1.taskId;
  */
 export const TASK_REGISTRY: Record<string, TaskEvaluationConfig> = {
   [PRODUCT_GROWTH_V1.taskId]: PRODUCT_GROWTH_V1,
+  [AI_ENGINEER_V1.taskId]: AI_ENGINEER_V1,
 };
+
+/** All registered tasks in stable display order. */
+export function listTasks(): TaskEvaluationConfig[] {
+  return [PRODUCT_GROWTH_V1, AI_ENGINEER_V1];
+}
 
 /** Resolve request taskId to a registered id (never throws). */
 export function resolveTaskId(taskId?: string | null): string {
@@ -24,4 +31,4 @@ export function getTaskConfig(taskId?: string | null): TaskEvaluationConfig {
   return TASK_REGISTRY[resolveTaskId(taskId)];
 }
 
-export { PRODUCT_GROWTH_V1 };
+export { PRODUCT_GROWTH_V1, AI_ENGINEER_V1 };

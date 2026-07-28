@@ -1,7 +1,8 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { FormEvent, useEffect, useState } from "react";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { FormEvent, Suspense, useEffect, useMemo, useState } from "react";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import {
   clearAssessmentDraft,
@@ -11,6 +12,7 @@ import {
 } from "@/lib/assessment/draft";
 import { saveResultCache } from "@/lib/assessment/resultCache";
 import { trackEvent } from "@/lib/analytics";
+import { getTaskConfig, resolveTaskId } from "@/lib/tasks";
 import {
   captureSourceFromUrl,
   readStoredSource,
@@ -18,6 +20,7 @@ import {
 import {
   ASSESSMENT_STORAGE_KEY,
   EVALUATION_STORAGE_KEY,
+  pickLocalized,
   type AssessmentAnswers,
   type EvaluationResult,
 } from "@/types/assessment";
@@ -29,9 +32,13 @@ const emptyAnswers: AssessmentAnswers = {
   iterationPlan: "",
 };
 
-export function AssessmentForm() {
+function AssessmentFormInner() {
   const { t, locale } = useLanguage();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const taskId = resolveTaskId(searchParams.get("taskId"));
+  const task = useMemo(() => getTaskConfig(taskId), [taskId]);
+
   const [answers, setAnswers] = useState<AssessmentAnswers>(emptyAnswers);
   const [displayName, setDisplayName] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -55,37 +62,18 @@ export function AssessmentForm() {
     saveAssessmentDraft(answers, displayName);
   }, [answers, displayName, hydrated]);
 
-  const fields: {
-    key: keyof AssessmentAnswers;
-    label: string;
-    prompt: string;
-    placeholder: string;
-  }[] = [
-    {
-      key: "problemAnalysis",
-      label: t.form.problemAnalysis.label,
-      prompt: t.form.problemAnalysis.prompt,
-      placeholder: t.form.problemAnalysis.placeholder,
-    },
-    {
-      key: "solutionProposal",
-      label: t.form.solutionProposal.label,
-      prompt: t.form.solutionProposal.prompt,
-      placeholder: t.form.solutionProposal.placeholder,
-    },
-    {
-      key: "aiCollaborationEvidence",
-      label: t.form.aiCollaborationEvidence.label,
-      prompt: t.form.aiCollaborationEvidence.prompt,
-      placeholder: t.form.aiCollaborationEvidence.placeholder,
-    },
-    {
-      key: "iterationPlan",
-      label: t.form.iterationPlan.label,
-      prompt: t.form.iterationPlan.prompt,
-      placeholder: t.form.iterationPlan.placeholder,
-    },
-  ];
+  const fields = task.evidenceFields.map((field) => ({
+    key: field.key,
+    label: pickLocalized(field.label, locale),
+    prompt: pickLocalized(
+      field.prompt ?? { en: "", zh: "" },
+      locale,
+    ),
+    placeholder: pickLocalized(
+      field.placeholder ?? { en: "", zh: "" },
+      locale,
+    ),
+  }));
 
   function updateField(key: keyof AssessmentAnswers, value: string) {
     setAnswers((prev) => ({ ...prev, [key]: value }));
@@ -116,6 +104,7 @@ export function AssessmentForm() {
     const source = readStoredSource();
     trackEvent("submit_assessment", {
       locale,
+      taskId,
       ...(source ? { source } : {}),
     });
 
@@ -135,6 +124,7 @@ export function AssessmentForm() {
           locale,
           displayName: resolvedName,
           source,
+          taskId,
         }),
       });
 
@@ -153,6 +143,7 @@ export function AssessmentForm() {
       trackEvent("evaluation_completed", {
         locale,
         score: evaluation.score,
+        taskId,
       });
 
       clearAssessmentDraft();
@@ -180,105 +171,107 @@ export function AssessmentForm() {
 
   return (
     <div className="mx-auto w-full max-w-2xl px-5 py-12 sm:px-8 sm:py-20">
-      {/* Part 1 — Task Introduction */}
       <div className="space-y-8">
         <div className="space-y-4">
           <p className="text-[12px] font-medium uppercase tracking-[0.14em] text-black/40">
             {t.simulationLabel}
           </p>
           <h1 className="text-[30px] font-semibold tracking-tight text-black sm:text-[40px]">
-            {t.assessmentTitle}
+            {pickLocalized(task.taskName, locale)}
           </h1>
           <p className="text-[17px] font-medium leading-snug text-black/75 sm:text-[18px]">
-            {t.assessmentRole}
+            {pickLocalized(task.role, locale)}
+          </p>
+          <p className="text-[13px]">
+            <Link
+              href="/simulate"
+              className="text-black/40 transition-colors hover:text-black/70"
+            >
+              {t.simulateChangeTask}
+            </Link>
           </p>
         </div>
 
-        {/* Part 2 — Business Context */}
         <div className="surface-card rounded-[20px] px-5 py-6 sm:px-7 sm:py-7">
           <p className="text-[12px] font-medium uppercase tracking-[0.12em] text-black/35">
             {t.businessContextTitle}
           </p>
           <p className="mt-3 text-[14px] leading-relaxed text-black/55">
-            {t.businessContextBody}
+            {pickLocalized(task.situation, locale)}
           </p>
-          <p className="mt-5 text-[12px] font-medium uppercase tracking-[0.12em] text-black/35">
-            {t.businessContextGoalLabel}
-          </p>
-          <p className="mt-2 text-[15px] font-medium leading-relaxed text-black/75">
-            {t.businessContextGoal}
-          </p>
-          <p className="mt-5 text-[12px] font-medium uppercase tracking-[0.12em] text-black/35">
-            {t.constraintsTitle}
-          </p>
-          <p className="mt-2 text-[14px] leading-relaxed text-black/55">
-            {t.constraintsBody}
-          </p>
+          {task.goal ? (
+            <>
+              <p className="mt-5 text-[12px] font-medium uppercase tracking-[0.12em] text-black/35">
+                {t.businessContextGoalLabel}
+              </p>
+              <p className="mt-2 text-[15px] font-medium leading-relaxed text-black/75">
+                {pickLocalized(task.goal, locale)}
+              </p>
+            </>
+          ) : null}
+          {task.constraints ? (
+            <>
+              <p className="mt-5 text-[12px] font-medium uppercase tracking-[0.12em] text-black/35">
+                {t.constraintsTitle}
+              </p>
+              <p className="mt-2 text-[14px] leading-relaxed text-black/55">
+                {pickLocalized(task.constraints, locale)}
+              </p>
+            </>
+          ) : null}
           <p className="mt-5 text-[13px] leading-relaxed text-black/45">
             {t.assessmentRulesBody}
           </p>
         </div>
 
-        {/* Part 3 — Work Materials */}
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <h2 className="text-[18px] font-semibold tracking-tight text-black sm:text-[20px]">
-              {t.workMaterialsTitle}
-            </h2>
-            <p className="text-[14px] leading-relaxed text-black/45">
-              {t.workMaterialsIntro}
-            </p>
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="rounded-[18px] border border-black/[0.06] bg-[color:var(--surface-muted)]/50 px-5 py-5">
-              <p className="text-[13px] font-medium text-black/70">
-                {t.userFeedbackTitle}
+        {task.materialBlocks && task.materialBlocks.length > 0 ? (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <h2 className="text-[18px] font-semibold tracking-tight text-black sm:text-[20px]">
+                {t.workMaterialsTitle}
+              </h2>
+              <p className="text-[14px] leading-relaxed text-black/45">
+                {t.workMaterialsIntro}
               </p>
-              <ul className="mt-3 space-y-2.5">
-                {t.userFeedbackItems.map((item) => (
-                  <li
-                    key={item}
-                    className="flex gap-2 text-[13px] leading-relaxed text-black/55"
-                  >
-                    <span
-                      className="mt-2 h-1 w-1 shrink-0 rounded-full bg-[color:var(--brand)]/50"
-                      aria-hidden
-                    />
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
             </div>
 
-            <div className="rounded-[18px] border border-black/[0.06] bg-[color:var(--surface-muted)]/50 px-5 py-5">
-              <p className="text-[13px] font-medium text-black/70">
-                {t.productDataTitle}
-              </p>
-              <ul className="mt-3 space-y-2.5">
-                {t.productDataItems.map((item) => (
-                  <li
-                    key={item}
-                    className="flex gap-2 text-[13px] leading-relaxed text-black/55"
-                  >
-                    <span
-                      className="mt-2 h-1 w-1 shrink-0 rounded-full bg-[color:var(--brand)]/50"
-                      aria-hidden
-                    />
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
+            <div className="grid gap-4 sm:grid-cols-2">
+              {task.materialBlocks.map((block) => (
+                <div
+                  key={pickLocalized(block.title, "en")}
+                  className="rounded-[18px] border border-black/[0.06] bg-[color:var(--surface-muted)]/50 px-5 py-5"
+                >
+                  <p className="text-[13px] font-medium text-black/70">
+                    {pickLocalized(block.title, locale)}
+                  </p>
+                  <ul className="mt-3 space-y-2.5">
+                    {block.items.map((item) => {
+                      const text = pickLocalized(item, locale);
+                      return (
+                        <li
+                          key={text}
+                          className="flex gap-2 text-[13px] leading-relaxed text-black/55"
+                        >
+                          <span
+                            className="mt-2 h-1 w-1 shrink-0 rounded-full bg-[color:var(--brand)]/50"
+                            aria-hidden
+                          />
+                          <span>{text}</span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              ))}
             </div>
           </div>
-        </div>
+        ) : null}
 
         {restored && (
           <p className="text-[13px] text-black/40">{t.draftRestored}</p>
         )}
       </div>
 
-      {/* Part 4 — Work Deliverable */}
       <form onSubmit={handleSubmit} className="mt-12 space-y-10 sm:mt-14">
         <div className="space-y-2 border-b border-black/[0.06] pb-6">
           <h2 className="text-[18px] font-semibold tracking-tight text-black sm:text-[20px]">
@@ -288,15 +281,15 @@ export function AssessmentForm() {
             {t.evidenceSectionIntro}
           </p>
           <div className="mt-4 flex flex-wrap gap-2">
-            {t.assessmentSteps.map((step, index) => (
+            {fields.map((field, index) => (
               <span
-                key={step}
+                key={field.key}
                 className="inline-flex items-center gap-1.5 rounded-full bg-[color:var(--surface-muted)] px-3 py-1.5 text-[12px] text-black/60"
               >
                 <span className="tabular-nums text-[color:var(--brand)]/70">
                   {String(index + 1).padStart(2, "0")}
                 </span>
-                {step}
+                {field.label}
               </span>
             ))}
           </div>
@@ -314,9 +307,11 @@ export function AssessmentForm() {
                 </span>
                 {field.label}
               </label>
-              <p className="whitespace-pre-line text-[14px] leading-relaxed text-black/55">
-                {field.prompt}
-              </p>
+              {field.prompt ? (
+                <p className="whitespace-pre-line text-[14px] leading-relaxed text-black/55">
+                  {field.prompt}
+                </p>
+              ) : null}
             </div>
             <textarea
               id={field.key}
@@ -383,5 +378,19 @@ export function AssessmentForm() {
         </div>
       </form>
     </div>
+  );
+}
+
+export function AssessmentForm() {
+  return (
+    <Suspense
+      fallback={
+        <div className="mx-auto flex min-h-[40vh] max-w-2xl items-center justify-center px-5">
+          <p className="text-[14px] text-black/40">…</p>
+        </div>
+      }
+    >
+      <AssessmentFormInner />
+    </Suspense>
   );
 }

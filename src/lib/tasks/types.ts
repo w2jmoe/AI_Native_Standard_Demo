@@ -13,15 +13,24 @@ export type TaskEvidenceField = {
   key: EvidenceFieldKey;
   label: LocalizedText;
   mapsTo: EvidenceMapsTo;
+  /** Form prompt / placeholder for this evidence slot (UI). */
+  prompt?: LocalizedText;
+  placeholder?: LocalizedText;
 };
 
 export type DimensionWeights = Record<DimensionKey, number>;
 
 export type ScoringCriteria = Partial<Record<DimensionKey, string>>;
 
+/** Work materials shown on the assessment page (UI). */
+export type TaskMaterialBlock = {
+  title: LocalizedText;
+  items: LocalizedText[];
+};
+
 /**
  * Per-task evaluation config (ANS Evaluation Architecture).
- * UI may reuse the same taskId; Phase 1 drives Prompt assembly.
+ * UI may reuse the same taskId; drives Prompt assembly + assessment presentation.
  */
 export type TaskEvaluationConfig = {
   taskId: string;
@@ -29,7 +38,13 @@ export type TaskEvaluationConfig = {
   role: LocalizedText;
   situation: LocalizedText;
   constraints?: LocalizedText;
+  /** Short goal line under situation (UI). */
+  goal?: LocalizedText;
   materialsSummary?: string;
+  /** Structured materials for the assessment form. */
+  materialBlocks?: TaskMaterialBlock[];
+  /** One-line card description on /simulate. */
+  shortDescription?: LocalizedText;
   evidenceFields: TaskEvidenceField[];
   dimensionWeights: DimensionWeights;
   scoringCriteria: ScoringCriteria;

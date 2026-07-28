@@ -8,12 +8,12 @@ import { captureSourceFromUrl } from "@/lib/tracking/source";
 
 export function LandingPage() {
   const { t } = useLanguage();
-  const [assessmentHref, setAssessmentHref] = useState("/assessment");
+  const [assessmentHref, setAssessmentHref] = useState("/simulate");
 
   useEffect(() => {
     const source = captureSourceFromUrl();
     setAssessmentHref(
-      source ? `/assessment?source=${encodeURIComponent(source)}` : "/assessment",
+      source ? `/simulate?source=${encodeURIComponent(source)}` : "/simulate",
     );
     trackEvent("page_view", {
       page: "landing",
