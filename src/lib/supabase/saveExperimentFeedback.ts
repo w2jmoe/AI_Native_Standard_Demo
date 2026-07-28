@@ -13,6 +13,8 @@ export type FeedbackRole =
   | "designer"
   | "research"
   | "customer_success"
+  | "forward_deployed_engineer"
+  | "data_analytics"
   | "other";
 
 export const HIRING_SIGNAL_VALUES: HiringSignalValue[] = [
@@ -29,6 +31,8 @@ export const FEEDBACK_ROLES: FeedbackRole[] = [
   "designer",
   "research",
   "customer_success",
+  "forward_deployed_engineer",
+  "data_analytics",
   "other",
 ];
 
