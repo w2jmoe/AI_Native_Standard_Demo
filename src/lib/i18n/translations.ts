@@ -3,8 +3,8 @@ export type Locale = "en" | "zh";
 export const translations = {
   en: {
     brand: "AI Native Standard",
-    tagline: "Evaluate how you think, work, and solve problems with AI.",
-    heroSubtitle: "Evaluate how you think, work, and solve problems with AI.",
+    tagline: "Evaluate how you think, work, and create results with AI.",
+    heroSubtitle: "Evaluate how you think, work, and create results with AI.",
     startCta: "Start Assessment",
     simulateTitle: "Choose an AI Work Simulation",
     simulateIntro:
@@ -39,7 +39,7 @@ export const translations = {
         desc: "How you improve through feedback, data, and AI.",
       },
     ],
-    earlyExperiment: "Early Experiment v1.9.4",
+    earlyExperiment: "Early Experiment v1.9.5",
     earlyExperimentDesc:
       "Built to explore how AI-era work ability can be measured.",
     simulationLabel: "AI Work Simulation",
@@ -266,8 +266,8 @@ export const translations = {
 
   zh: {
     brand: "AI 时代工作能力评估",
-    tagline: "通过真实工作模拟，评估你如何思考、协作 AI 并解决问题。",
-    heroSubtitle: "通过真实工作模拟，评估你如何思考、协作 AI 并解决问题。",
+    tagline: "通过真实工作模拟，评估你如何思考、协作 AI 并创造结果。",
+    heroSubtitle: "通过真实工作模拟，评估你如何思考、协作 AI 并创造结果。",
     startCta: "开始测试",
     simulateTitle: "选择一次 AI 工作模拟",
     simulateIntro:
@@ -302,7 +302,7 @@ export const translations = {
         desc: "你如何通过反馈、数据和 AI 持续改进。",
       },
     ],
-    earlyExperiment: "早期实验 v1.9.4",
+    earlyExperiment: "早期实验 v1.9.5",
     earlyExperimentDesc: "用于探索如何衡量 AI 时代的工作能力。",
     simulationLabel: "AI 工作模拟",
     assessmentTitle: "AI 产品增长挑战",
