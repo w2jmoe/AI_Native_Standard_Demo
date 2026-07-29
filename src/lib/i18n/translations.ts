@@ -39,7 +39,7 @@ export const translations = {
         desc: "How you improve through feedback, data, and AI.",
       },
     ],
-    earlyExperiment: "Early Experiment v1.9.3",
+    earlyExperiment: "Early Experiment v1.9.4",
     earlyExperimentDesc:
       "Built to explore how AI-era work ability can be measured.",
     simulationLabel: "AI Work Simulation",
@@ -265,7 +265,7 @@ export const translations = {
   },
 
   zh: {
-    brand: "AI时代工作能力评估",
+    brand: "AI 时代工作能力评估",
     tagline: "通过真实工作模拟，评估你如何思考、协作 AI 并解决问题。",
     heroSubtitle: "通过真实工作模拟，评估你如何思考、协作 AI 并解决问题。",
     startCta: "开始测试",
@@ -286,7 +286,7 @@ export const translations = {
         desc: "在动手之前，你如何定义真正的问题。",
       },
       {
-        title: "AI协作能力",
+        title: "AI 协作能力",
         desc: "你如何把 AI 当作思考与创作伙伴。",
       },
       {
@@ -302,7 +302,7 @@ export const translations = {
         desc: "你如何通过反馈、数据和 AI 持续改进。",
       },
     ],
-    earlyExperiment: "早期实验 v1.9.3",
+    earlyExperiment: "早期实验 v1.9.4",
     earlyExperimentDesc: "用于探索如何衡量 AI 时代的工作能力。",
     simulationLabel: "AI 工作模拟",
     assessmentTitle: "AI 产品增长挑战",
@@ -499,7 +499,7 @@ export const translations = {
     shareTextFootnote: "*中国大陆地区访问需要开启代理",
     continueHint: "这是一份能力发现画像——不是通过或失败。",
     footerNote: "AI 工作模拟 　|　 能力发现",
-    footerBrand: "AI时代工作能力评估",
+    footerBrand: "AI 时代工作能力评估",
     footerTagline: "探索 AI 时代工作能力验证方式。",
     footerContactLabel: "研究交流与合作：",
     evaluateErrorTitle: "出了点问题",

@@ -58,7 +58,7 @@ export const dimensionMeta: Record<
   { en: string; zh: string }
 > = {
   problemFraming: { en: "Problem Framing", zh: "问题定义" },
-  aiCollaboration: { en: "AI Collaboration", zh: "AI协作" },
+  aiCollaboration: { en: "AI Collaboration", zh: "AI 协作" },
   judgment: { en: "Judgment", zh: "判断能力" },
   execution: { en: "Execution", zh: "执行交付" },
   iteration: { en: "Iteration", zh: "迭代优化" },
